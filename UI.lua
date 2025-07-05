@@ -9,35 +9,52 @@ local textservice = game:GetService("TextService");
 local httpservice = game:GetService("HttpService");
 local tweenservice = game:GetService("TweenService");
 local runservice = game:GetService("RunService");
+local userinputservice = game:GetService("UserInputService");
 
--- Enhanced theme with additional animation properties
+-- Enhanced theme with refined dark aesthetics
 library.theme = {
-	BackGround = Color3.fromRGB(30, 30, 30);
-	BackGround2 = Color3.fromRGB(38, 38, 38);
-	BackGroundHover = Color3.fromRGB(45, 45, 45);
+	-- Background colors
+	BackGround = Color3.fromRGB(25, 25, 28);
+	BackGround2 = Color3.fromRGB(32, 32, 36);
+	BackGroundHover = Color3.fromRGB(40, 40, 45);
+	BackGroundActive = Color3.fromRGB(45, 45, 50);
 	
-	Border = Color3.fromRGB(0, 0, 0);
+	-- Border colors
+	Border = Color3.fromRGB(55, 55, 60);
 	BorderHover = Color3.fromRGB(85, 0, 255);
+	BorderActive = Color3.fromRGB(100, 20, 255);
 	
-	Toggle = Color3.fromRGB(62, 62, 62);
-	ToggleHover = Color3.fromRGB(75, 75, 75);
+	-- Interactive elements
+	Toggle = Color3.fromRGB(50, 50, 55);
+	ToggleHover = Color3.fromRGB(60, 60, 65);
 	Selected = Color3.fromRGB(85, 0, 255);
 	SelectedHover = Color3.fromRGB(100, 20, 255);
+	SelectedActive = Color3.fromRGB(70, 0, 200);
 	
-	Font = Enum.Font.Ubuntu; -- Changed from Inter to Ubuntu
-	TextSize = 14;
-	TextColor = Color3.fromRGB(255, 255, 255);
-	TextColorDimmed = Color3.fromRGB(180, 180, 180);
+	-- Text colors
+	Font = Enum.Font.Inter;
+	TextSize = 13;
+	TextColor = Color3.fromRGB(240, 240, 245);
+	TextColorDimmed = Color3.fromRGB(160, 160, 170);
+	TextColorMuted = Color3.fromRGB(120, 120, 130);
+	
+	-- Status colors
+	Success = Color3.fromRGB(34, 197, 94);
+	Warning = Color3.fromRGB(251, 191, 36);
+	Error = Color3.fromRGB(239, 68, 68);
 	
 	-- Animation settings
-	AnimationSpeed = 0.2;
+	AnimationSpeed = 0.25;
 	HoverSpeed = 0.15;
+	ClickSpeed = 0.08;
 	EasingStyle = Enum.EasingStyle.Quart;
 	EasingDirection = Enum.EasingDirection.Out;
 };
 
--- Animation utility functions
+-- Enhanced animation utility functions
 local function createTween(object, properties, duration, easingStyle, easingDirection)
+	if not object or not object.Parent then return end
+	
 	duration = duration or library.theme.AnimationSpeed
 	easingStyle = easingStyle or library.theme.EasingStyle
 	easingDirection = easingDirection or library.theme.EasingDirection
@@ -49,79 +66,132 @@ local function createTween(object, properties, duration, easingStyle, easingDire
 end
 
 local function addHoverEffect(object, hoverProperties, normalProperties)
-	local isHovering = false
+	if not object then return end
 	
-	object.MouseEnter:Connect(function()
+	local isHovering = false
+	local connections = {}
+	
+	connections[#connections + 1] = object.MouseEnter:Connect(function()
 		if not isHovering then
 			isHovering = true
 			createTween(object, hoverProperties, library.theme.HoverSpeed)
 		end
 	end)
 	
-	object.MouseLeave:Connect(function()
+	connections[#connections + 1] = object.MouseLeave:Connect(function()
 		if isHovering then
 			isHovering = false
 			createTween(object, normalProperties, library.theme.HoverSpeed)
 		end
 	end)
+	
+	return connections
 end
 
-local function addClickEffect(object, clickScale)
-	clickScale = clickScale or 0.95
+local function addClickEffect(object, clickScale, clickProperties)
+	if not object then return end
+	
+	clickScale = clickScale or 0.96
 	local originalSize = object.Size
+	local connections = {}
 	
-	object.MouseButton1Down:Connect(function()
-		createTween(object, {Size = UDim2.fromScale(originalSize.X.Scale * clickScale, originalSize.Y.Scale * clickScale)}, 0.1)
+	connections[#connections + 1] = object.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			local targetSize = UDim2.fromScale(
+				originalSize.X.Scale * clickScale, 
+				originalSize.Y.Scale * clickScale
+			)
+			createTween(object, {Size = targetSize}, library.theme.ClickSpeed)
+			
+			if clickProperties then
+				createTween(object, clickProperties, library.theme.ClickSpeed)
+			end
+		end
 	end)
 	
-	object.MouseButton1Up:Connect(function()
-		createTween(object, {Size = originalSize}, 0.1)
+	connections[#connections + 1] = object.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			createTween(object, {Size = originalSize}, library.theme.ClickSpeed * 1.2)
+		end
 	end)
 	
-	object.MouseLeave:Connect(function()
-		createTween(object, {Size = originalSize}, 0.1)
+	connections[#connections + 1] = object.MouseLeave:Connect(function()
+		createTween(object, {Size = originalSize}, library.theme.ClickSpeed)
 	end)
+	
+	return connections
 end
 
-local function addGlowEffect(object, glowColor, intensity)
-	intensity = intensity or 1
-	glowColor = glowColor or library.theme.Selected
+local function addRippleEffect(object, rippleColor)
+	if not object then return end
 	
-	local glow = Instance.new("ImageLabel")
-	glow.Name = "Glow"
-	glow.Parent = object
-	glow.BackgroundTransparency = 1
-	glow.Image = "rbxassetid://5028857084"
-	glow.ImageColor3 = glowColor
-	glow.ImageTransparency = 1
-	glow.Size = UDim2.fromScale(1.2, 1.2)
-	glow.Position = UDim2.fromScale(-0.1, -0.1)
-	glow.ZIndex = object.ZIndex - 1
+	rippleColor = rippleColor or library.theme.Selected
 	
-	return glow
+	local connection = object.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			local mouse = game.Players.LocalPlayer:GetMouse()
+			local objectPos = object.AbsolutePosition
+			local objectSize = object.AbsoluteSize
+			
+			local ripple = Instance.new("Frame")
+			ripple.Name = "Ripple"
+			ripple.Parent = object
+			ripple.BackgroundColor3 = rippleColor
+			ripple.BackgroundTransparency = 0.7
+			ripple.BorderSizePixel = 0
+			ripple.Size = UDim2.fromOffset(0, 0)
+			ripple.ZIndex = object.ZIndex + 10
+			
+			-- Position ripple at click location
+			local relativeX = mouse.X - objectPos.X
+			local relativeY = mouse.Y - objectPos.Y
+			ripple.Position = UDim2.fromOffset(relativeX, relativeY)
+			ripple.AnchorPoint = Vector2.new(0.5, 0.5)
+			
+			local rippleCorner = Instance.new("UICorner", ripple)
+			rippleCorner.CornerRadius = UDim.new(1, 0)
+			
+			local maxSize = math.max(objectSize.X, objectSize.Y) * 2
+			
+			createTween(ripple, {
+				Size = UDim2.fromOffset(maxSize, maxSize),
+				BackgroundTransparency = 1
+			}, 0.6, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+			
+			game:GetService("Debris"):AddItem(ripple, 0.6)
+		end
+	end)
+	
+	return connection
 end
 
 function library:CreateWindow(Keybind, Name)
 	local window = { };
 	window.keybind = Keybind or Enum.KeyCode.RightShift;
-	window.name = Name
+	window.name = Name or "UI Library"
 
 	window.ScreenGui = Instance.new("ScreenGui");
 	window.ScreenGui.Parent = (CoreGui or StarterGUI);
 	window.ScreenGui.ResetOnSpawn = false;
-	window.ScreenGui.DisplayOrder = 10;
+	window.ScreenGui.DisplayOrder = 100;
+	window.ScreenGui.Name = "UILibrary_" .. tostring(math.random(1000, 9999));
 
 	-- Enhanced dragging system
 	local dragging, dragInput, dragStart, startPos
 	local dragTween
 	
-	game:GetService("UserInputService").InputChanged:Connect(function(input)
+	userinputservice.InputChanged:Connect(function(input)
 		if input == dragInput and dragging then
 			local delta = input.Position - dragStart
-			local newPosition = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+			local newPosition = UDim2.new(
+				startPos.X.Scale, 
+				startPos.X.Offset + delta.X, 
+				startPos.Y.Scale, 
+				startPos.Y.Offset + delta.Y
+			)
 			
 			if dragTween then dragTween:Cancel() end
-			dragTween = createTween(window.Main, {Position = newPosition}, 0.03, Enum.EasingStyle.Linear)
+			dragTween = createTween(window.Main, {Position = newPosition}, 0.02, Enum.EasingStyle.Linear)
 		end
 	end)
 
@@ -148,9 +218,9 @@ function library:CreateWindow(Keybind, Name)
 		end
 	end
 
-	-- Smaller, more compact main window
+	-- Main window with enhanced styling
 	window.Main = Instance.new("TextButton", window.ScreenGui);
-	window.Main.Size = UDim2.fromOffset(650, 380); -- Reduced from 800x450
+	window.Main.Size = UDim2.fromOffset(680, 420);
 	window.Main.BackgroundColor3 = library.theme.BackGround;
 	window.Main.BorderSizePixel = 0;
 	window.Main.Active = true;
@@ -159,94 +229,120 @@ function library:CreateWindow(Keybind, Name)
 	window.Main.InputBegan:Connect(dragstart)
 	window.Main.InputChanged:Connect(dragend)
 	
-	-- Add rounded corners
+	-- Enhanced rounded corners
 	local mainCorner = Instance.new("UICorner", window.Main)
-	mainCorner.CornerRadius = UDim.new(0, 12)
+	mainCorner.CornerRadius = UDim.new(0, 16)
 	
-	-- Add subtle border
+	-- Enhanced border with gradient effect
 	local mainStroke = Instance.new("UIStroke", window.Main)
 	mainStroke.Color = library.theme.Border
-	mainStroke.Thickness = 1
+	mainStroke.Thickness = 1.5
+	mainStroke.Transparency = 0.3
 	
-	-- Window entrance animation
+	-- Window entrance animation with bounce
 	window.Main.Position = UDim2.fromScale(0.5, 0.5)
 	window.Main.AnchorPoint = Vector2.new(0.5, 0.5)
 	window.Main.Size = UDim2.fromOffset(0, 0)
-	createTween(window.Main, {Size = UDim2.fromOffset(650, 380)}, 0.4, Enum.EasingStyle.Back)
+	window.Main.BackgroundTransparency = 1
+	
+	createTween(window.Main, {
+		Size = UDim2.fromOffset(680, 420),
+		BackgroundTransparency = 0
+	}, 0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
-	-- Subtle drop shadow
+	-- Enhanced drop shadow with blur effect
 	local shadow = Instance.new("Frame", window.Main)
 	shadow.Name = "Shadow"
 	shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-	shadow.BackgroundTransparency = 0.8
+	shadow.BackgroundTransparency = 0.7
 	shadow.BorderSizePixel = 0
-	shadow.Position = UDim2.fromOffset(3, 3)
+	shadow.Position = UDim2.fromOffset(4, 4)
 	shadow.Size = UDim2.fromScale(1, 1)
 	shadow.ZIndex = window.Main.ZIndex - 1
 	
 	local shadowCorner = Instance.new("UICorner", shadow)
-	shadowCorner.CornerRadius = UDim.new(0, 12)
+	shadowCorner.CornerRadius = UDim.new(0, 16)
 
-	-- Compact right side panel
+	-- Enhanced sidebar with gradient
 	window.RightSide = Instance.new("Frame", window.Main);
 	window.RightSide.BackgroundColor3 = library.theme.BackGround2;
-	window.RightSide.Size = UDim2.fromOffset(120, 380); -- Reduced width
+	window.RightSide.Size = UDim2.fromOffset(140, 420);
 	window.RightSide.BorderSizePixel = 0;
-	window.RightSide.Position = UDim2.fromOffset(530, 0); -- Adjusted position
+	window.RightSide.Position = UDim2.fromOffset(540, 0);
 
-	-- Compact tabs holder
+	local rightCorner = Instance.new("UICorner", window.RightSide)
+	rightCorner.CornerRadius = UDim.new(0, 16)
+
+	-- Enhanced tabs holder
 	window.TabsHolder = Instance.new("Frame", window.Main);
-	window.TabsHolder.Position = UDim2.fromScale(0.025, 0.12); -- Adjusted positioning
-	window.TabsHolder.Size = UDim2.fromOffset(90, 320); -- Reduced size
+	window.TabsHolder.Position = UDim2.fromScale(0.02, 0.12);
+	window.TabsHolder.Size = UDim2.fromOffset(110, 350);
 	window.TabsHolder.BackgroundTransparency = 1;
 
 	window.UIListLayout = Instance.new("UIListLayout", window.TabsHolder);
 	window.UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center;
-	window.UIListLayout.Padding = UDim.new(0, 6); -- Reduced padding
+	window.UIListLayout.Padding = UDim.new(0, 8);
 	window.UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder;
 
-	-- Thinner separator line
+	-- Enhanced separator with gradient
 	window.line = Instance.new("Frame", window.Main);
 	window.line.Position = UDim2.fromScale(0.18, 0.05);
-	window.line.Size = UDim2.fromOffset(1, 360); -- Adjusted size
+	window.line.Size = UDim2.fromOffset(2, 380);
 	window.line.BorderSizePixel = 0;
 	window.line.BackgroundColor3 = library.theme.Border;
+	
+	local lineGradient = Instance.new("UIGradient", window.line)
+	lineGradient.Color = ColorSequence.new{
+		ColorSequenceKeypoint.new(0, library.theme.Border),
+		ColorSequenceKeypoint.new(0.5, library.theme.BorderHover),
+		ColorSequenceKeypoint.new(1, library.theme.Border)
+	}
+	lineGradient.Rotation = 90
 
-	-- Compact title with better typography
+	-- Enhanced title with better typography
 	window.Title = Instance.new("TextLabel", window.Main);
-	window.Title.Position = UDim2.fromScale(0.025, 0.02);
-	window.Title.Size = UDim2.fromOffset(150, 28); -- Reduced height
+	window.Title.Position = UDim2.fromScale(0.03, 0.02);
+	window.Title.Size = UDim2.fromOffset(200, 32);
 	window.Title.Text = window.name;
 	window.Title.Font = library.theme.Font;
-	window.Title.TextSize = 16; -- Slightly smaller
+	window.Title.TextSize = 18;
 	window.Title.BackgroundTransparency = 1;
 	window.Title.TextColor3 = library.theme.TextColor;
 	window.Title.TextXAlignment = Enum.TextXAlignment.Left;
+	
+	-- Enhanced font weight
 	local fontFace = window.Title.FontFace
-	fontFace.Weight = Enum.FontWeight.SemiBold -- Less bold
+	fontFace.Weight = Enum.FontWeight.SemiBold
 	window.Title.FontFace = fontFace;
 
-	-- Enhanced keybind toggle with smoother animation
-	game:GetService("UserInputService").InputBegan:Connect(function(key)
+	-- Enhanced keybind toggle with smooth animations
+	userinputservice.InputBegan:Connect(function(key)
 		if key.KeyCode == window.keybind then
 			if window.Main.Visible then
+				-- Hide animation
 				createTween(window.Main, {
 					Size = UDim2.fromOffset(0, 0),
 					BackgroundTransparency = 1
-				}, 0.25, Enum.EasingStyle.Back, Enum.EasingDirection.In)
-				createTween(shadow, {BackgroundTransparency = 1}, 0.25)
-				wait(0.25)
+				}, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+				createTween(shadow, {BackgroundTransparency = 1}, 0.3)
+				createTween(mainStroke, {Transparency = 1}, 0.3)
+				
+				wait(0.3)
 				window.Main.Visible = false
 			else
+				-- Show animation
 				window.Main.Visible = true
 				window.Main.BackgroundTransparency = 1
 				window.Main.Size = UDim2.fromOffset(0, 0)
 				shadow.BackgroundTransparency = 1
+				mainStroke.Transparency = 1
+				
 				createTween(window.Main, {
-					Size = UDim2.fromOffset(650, 380),
+					Size = UDim2.fromOffset(680, 420),
 					BackgroundTransparency = 0
-				}, 0.25, Enum.EasingStyle.Back)
-				createTween(shadow, {BackgroundTransparency = 0.8}, 0.25)
+				}, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+				createTween(shadow, {BackgroundTransparency = 0.7}, 0.3)
+				createTween(mainStroke, {Transparency = 0.3}, 0.3)
 			end
 		end
 	end)
@@ -262,19 +358,52 @@ function library:CreateWindow(Keybind, Name)
 		local ToggleButton = { };
 
 		ToggleButton.Frame = Instance.new("Frame", window.ScreenGui);
-		ToggleButton.Frame.Size = UDim2.fromOffset(120, 32); -- More compact
+		ToggleButton.Frame.Size = UDim2.fromOffset(140, 36);
 		ToggleButton.Frame.Position = UDim2.fromScale(0.02, 0.02);
-		ToggleButton.Frame.Draggable = true;
 		ToggleButton.Frame.Active = true;
 		ToggleButton.Frame.BackgroundColor3 = library.theme.BackGround;
 		ToggleButton.Frame.BorderSizePixel = 0;
 		
+		-- Make frame draggable
+		local dragConnection
+		local isDragging = false
+		
+		ToggleButton.Frame.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 then
+				isDragging = true
+				local startPos = ToggleButton.Frame.Position
+				local startMousePos = input.Position
+				
+				dragConnection = userinputservice.InputChanged:Connect(function(moveInput)
+					if moveInput.UserInputType == Enum.UserInputType.MouseMovement and isDragging then
+						local delta = moveInput.Position - startMousePos
+						ToggleButton.Frame.Position = UDim2.new(
+							startPos.X.Scale,
+							startPos.X.Offset + delta.X,
+							startPos.Y.Scale,
+							startPos.Y.Offset + delta.Y
+						)
+					end
+				end)
+			end
+		end)
+		
+		ToggleButton.Frame.InputEnded:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 then
+				isDragging = false
+				if dragConnection then
+					dragConnection:Disconnect()
+				end
+			end
+		end)
+		
 		local corner = Instance.new("UICorner", ToggleButton.Frame)
-		corner.CornerRadius = UDim.new(0, 8)
+		corner.CornerRadius = UDim.new(0, 10)
 		
 		local stroke = Instance.new("UIStroke", ToggleButton.Frame)
 		stroke.Color = library.theme.Border
-		stroke.Thickness = 1
+		stroke.Thickness = 1.5
+		stroke.Transparency = 0.5
 
 		ToggleButton.Button = Instance.new("TextButton", ToggleButton.Frame);
 		ToggleButton.Button.Size = UDim2.fromScale(1, 1);
@@ -291,6 +420,7 @@ function library:CreateWindow(Keybind, Name)
 			{TextColor3 = library.theme.TextColor}
 		)
 		addClickEffect(ToggleButton.Frame, 0.95)
+		addRippleEffect(ToggleButton.Button, library.theme.Selected)
 		
 		ToggleButton.Button.MouseButton1Click:Connect(function()
 			window.Main.Visible = not window.Main.Visible;
@@ -300,7 +430,7 @@ function library:CreateWindow(Keybind, Name)
 			createTween(ToggleButton.Button, {TextColor3 = targetColor}, 0.2)
 		end)
 
-		game:GetService("UserInputService").InputBegan:Connect(function(key)
+		userinputservice.InputBegan:Connect(function(key)
 			if key.KeyCode == window.keybind then
 				ToggleButton.Button.Text = window.Main.Visible and "Hide UI" or "Show UI"
 				local targetColor = window.Main.Visible and library.theme.Selected or library.theme.TextColorDimmed
@@ -313,7 +443,7 @@ function library:CreateWindow(Keybind, Name)
 				ToggleButton.Frame.BackgroundTransparency = 1
 				ToggleButton.Frame.Size = UDim2.fromOffset(0, 0)
 				createTween(ToggleButton.Frame, {BackgroundTransparency = 0}, 0.3)
-				createTween(ToggleButton.Frame, {Size = UDim2.fromOffset(120, 32)}, 0.3, Enum.EasingStyle.Back)
+				createTween(ToggleButton.Frame, {Size = UDim2.fromOffset(140, 36)}, 0.3, Enum.EasingStyle.Back)
 			else
 				createTween(ToggleButton.Frame, {BackgroundTransparency = 1}, 0.3)
 				createTween(ToggleButton.Frame, {Size = UDim2.fromOffset(0, 0)}, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
@@ -328,7 +458,7 @@ function library:CreateWindow(Keybind, Name)
 		local tab = { };
 
 		tab.Button = Instance.new("TextButton", window.TabsHolder);
-		tab.Button.Size = UDim2.fromOffset(110, 28); -- More compact
+		tab.Button.Size = UDim2.fromOffset(120, 32);
 		tab.Button.BackgroundColor3 = library.theme.BackGround;
 		tab.Button.Text = Name;
 		tab.Button.TextColor3 = library.theme.TextColor;
@@ -338,42 +468,44 @@ function library:CreateWindow(Keybind, Name)
 		tab.Button.AutoButtonColor = false;
 		
 		local corner = Instance.new("UICorner", tab.Button)
-		corner.CornerRadius = UDim.new(0, 6)
+		corner.CornerRadius = UDim.new(0, 8)
 		
 		addHoverEffect(tab.Button,
 			{BackgroundColor3 = library.theme.BackGroundHover, TextColor3 = library.theme.Selected},
 			{BackgroundColor3 = library.theme.BackGround, TextColor3 = library.theme.TextColor}
 		)
 		addClickEffect(tab.Button, 0.97)
+		addRippleEffect(tab.Button, library.theme.Selected)
 
 		tab.Window = Instance.new("ScrollingFrame", window.Main);
 		tab.Window.Name = Name .. "Tab";
 		tab.Window.BackgroundTransparency = 1;
 		tab.Window.Visible = false;
-		tab.Window.Size = UDim2.fromOffset(530, 380); -- Adjusted for new layout
-		tab.Window.Position = UDim2.fromOffset(120, 0);
-		tab.Window.ScrollBarThickness = 2;
+		tab.Window.Size = UDim2.fromOffset(540, 420);
+		tab.Window.Position = UDim2.fromOffset(140, 0);
+		tab.Window.ScrollBarThickness = 3;
 		tab.Window.ScrollBarImageColor3 = library.theme.Selected;
 		tab.Window.BorderSizePixel = 0;
+		tab.Window.ScrollingDirection = Enum.ScrollingDirection.Y;
 
 		tab.Left = Instance.new("Frame", tab.Window);
-		tab.Left.Size = UDim2.fromOffset(250, 360); -- Adjusted size
+		tab.Left.Size = UDim2.fromOffset(260, 400);
 		tab.Left.Position = UDim2.fromOffset(10, 10);
 		tab.Left.BackgroundTransparency = 1;
 
 		tab.UiListLayout = Instance.new("UIListLayout", tab.Left);
 		tab.UiListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center;
-		tab.UiListLayout.Padding = UDim.new(0, 8); -- Reduced padding
+		tab.UiListLayout.Padding = UDim.new(0, 10);
 		tab.UiListLayout.SortOrder = Enum.SortOrder.LayoutOrder;
 
 		tab.Right = Instance.new("Frame", tab.Window);
-		tab.Right.Size = UDim2.fromOffset(250, 360); -- Adjusted size
-		tab.Right.Position = UDim2.fromOffset(270, 10);
+		tab.Right.Size = UDim2.fromOffset(260, 400);
+		tab.Right.Position = UDim2.fromOffset(280, 10);
 		tab.Right.BackgroundTransparency = 1;
 
 		tab.UiListLayout1 = Instance.new("UIListLayout", tab.Right);
 		tab.UiListLayout1.HorizontalAlignment = Enum.HorizontalAlignment.Center;
-		tab.UiListLayout1.Padding = UDim.new(0, 8); -- Reduced padding
+		tab.UiListLayout1.Padding = UDim.new(0, 10);
 		tab.UiListLayout1.SortOrder = Enum.SortOrder.LayoutOrder;
 
 		local block = false;
@@ -413,7 +545,7 @@ function library:CreateWindow(Keybind, Name)
 			tab:SelectTab();
 		end
 
-		tab.Button.MouseButton1Down:Connect(function()
+		tab.Button.MouseButton1Click:Connect(function()
 			tab:SelectTab();
 		end)
 
@@ -429,19 +561,20 @@ function library:CreateWindow(Keybind, Name)
 			Sector.Main.BackgroundColor3 = library.theme.BackGround2;
 			Sector.Main.BorderSizePixel = 0;
 			Sector.Main.Name = Sector.name:gsub(" ", "") .. "Sector";
-			Sector.Main.Size = UDim2.fromOffset(240, 40); -- More compact
+			Sector.Main.Size = UDim2.fromOffset(250, 50);
 
 			Sector.UICorner = Instance.new("UICorner", Sector.Main);
-			Sector.UICorner.CornerRadius = UDim.new(0, 8); -- Smaller radius
+			Sector.UICorner.CornerRadius = UDim.new(0, 12);
 			
-			-- Subtle border
+			-- Enhanced border with subtle glow
 			local sectorStroke = Instance.new("UIStroke", Sector.Main)
 			sectorStroke.Color = library.theme.Border
 			sectorStroke.Thickness = 1
+			sectorStroke.Transparency = 0.5
 
 			Sector.Items = Instance.new("Frame", Sector.Main);
 			Sector.Items.Position = UDim2.fromScale(0.5, 0);
-			Sector.Items.Size = UDim2.fromOffset(220, 40); -- Adjusted size
+			Sector.Items.Size = UDim2.fromOffset(230, 50);
 			Sector.Items.AutomaticSize = Enum.AutomaticSize.Y;
 			Sector.Items.BackgroundTransparency = 1;
 			Sector.Items.AnchorPoint = Vector2.new(0.5, 0);
@@ -449,16 +582,17 @@ function library:CreateWindow(Keybind, Name)
 			Sector.UIListLayout = Instance.new("UIListLayout", Sector.Items);
 			Sector.UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder;
 			Sector.UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center;
-			Sector.UIListLayout.Padding = UDim.new(0, 4); -- Reduced padding
+			Sector.UIListLayout.Padding = UDim.new(0, 6);
 
 			Sector.Name = Instance.new("TextLabel", Sector.Items);
 			Sector.Name.BackgroundTransparency = 1;
-			Sector.Name.Size = UDim2.fromOffset(220, 24); -- Smaller header
+			Sector.Name.Size = UDim2.fromOffset(230, 28);
 			Sector.Name.Text = Name;
 			Sector.Name.TextColor3 = library.theme.TextColor;
 			Sector.Name.Font = library.theme.Font;
-			Sector.Name.TextSize = library.theme.TextSize + 1;
+			Sector.Name.TextSize = library.theme.TextSize + 2;
 			Sector.Name.TextYAlignment = Enum.TextYAlignment.Center;
+			
 			local fontFace = Sector.Name.FontFace
 			fontFace.Weight = Enum.FontWeight.Medium
 			Sector.Name.FontFace = fontFace;
@@ -466,46 +600,47 @@ function library:CreateWindow(Keybind, Name)
 			table.insert(Sector.side:lower() == "left" and tab.SectorsLeft or tab.SectorsRight, Sector);
 
 			function Sector:FixSize()
-				local targetSize = UDim2.fromOffset(240, Sector.UIListLayout.AbsoluteContentSize.Y + 8) -- Reduced padding
+				local targetSize = UDim2.fromOffset(250, Sector.UIListLayout.AbsoluteContentSize.Y + 12)
 				createTween(Sector.Main, {Size = targetSize}, 0.2)
 				
 				local sizeleft, sizeright = 0, 0;
 				for i,v in pairs(tab.SectorsLeft) do
-					sizeleft = sizeleft + v.Main.AbsoluteSize.Y;
+					sizeleft = sizeleft + v.Main.AbsoluteSize.Y + 10;
 				end
 				for i,v in pairs(tab.SectorsRight) do
-					sizeright = sizeright + v.Main.AbsoluteSize.Y;
+					sizeright = sizeright + v.Main.AbsoluteSize.Y + 10;
 				end
-				tab.Window.CanvasSize = (sizeleft > sizeright and UDim2.fromOffset(530, sizeleft + 80) or UDim2.fromOffset(530, sizeright + 80))
+				tab.Window.CanvasSize = UDim2.fromOffset(540, math.max(sizeleft, sizeright) + 20)
 			end
 			
-			function Sector:CreateToggle(Text, Defult, Callback, Flag)
+			function Sector:CreateToggle(Text, Default, Callback, Flag)
 				local Toggle = { };
 				Toggle.text = Text or "";
-				Toggle.default = Defult or false;
+				Toggle.default = Default or false;
 				Toggle.callback = Callback or function(value) end;
 				Toggle.flag = Flag or Text or "";
 
 				Toggle.value = Toggle.default;
 
 				Toggle.Main = Instance.new("TextButton", Sector.Items);
-				Toggle.Main.Size = UDim2.fromOffset(220, 28); -- More compact
+				Toggle.Main.Size = UDim2.fromOffset(230, 32);
 				Toggle.Main.BackgroundColor3 = library.theme.BackGround;
 				Toggle.Main.AutoButtonColor = false;
 				Toggle.Main.Text = "";
 
 				Toggle.UICorner = Instance.new("UICorner", Toggle.Main);
-				Toggle.UICorner.CornerRadius = UDim.new(0, 6);
+				Toggle.UICorner.CornerRadius = UDim.new(0, 8);
 				
 				addHoverEffect(Toggle.Main,
 					{BackgroundColor3 = library.theme.BackGroundHover},
 					{BackgroundColor3 = library.theme.BackGround}
 				)
 				addClickEffect(Toggle.Main, 0.98)
+				addRippleEffect(Toggle.Main, library.theme.Selected)
 
 				Toggle.Text = Instance.new("TextLabel", Toggle.Main);
 				Toggle.Text.Position = UDim2.fromScale(0.05, 0);
-				Toggle.Text.Size = UDim2.fromOffset(150, 28);
+				Toggle.Text.Size = UDim2.fromOffset(170, 32);
 				Toggle.Text.Text = Text;
 				Toggle.Text.TextColor3 = library.theme.TextColor;
 				Toggle.Text.Font = library.theme.Font;
@@ -514,13 +649,18 @@ function library:CreateWindow(Keybind, Name)
 				Toggle.Text.TextXAlignment = Enum.TextXAlignment.Left;
 
 				Toggle.Indicator = Instance.new("Frame", Toggle.Main);
-				Toggle.Indicator.Position = UDim2.fromScale(0.88, 0.25);
-				Toggle.Indicator.Size = UDim2.fromOffset(14, 14); -- Smaller indicator
+				Toggle.Indicator.Position = UDim2.fromScale(0.85, 0.25);
+				Toggle.Indicator.Size = UDim2.fromOffset(16, 16);
 				Toggle.Indicator.BackgroundColor3 = library.theme.Toggle;
 				Toggle.Indicator.BorderSizePixel = 0;
 				
 				local indicatorCorner = Instance.new("UICorner", Toggle.Indicator)
-				indicatorCorner.CornerRadius = UDim.new(0, 3)
+				indicatorCorner.CornerRadius = UDim.new(0, 4)
+				
+				local indicatorStroke = Instance.new("UIStroke", Toggle.Indicator)
+				indicatorStroke.Color = library.theme.Border
+				indicatorStroke.Thickness = 1
+				indicatorStroke.Transparency = 0.5
 
 				if Toggle.flag and Toggle.flag ~= "" then
 					library.flags[Toggle.flag] = Toggle.default or false;
@@ -531,15 +671,17 @@ function library:CreateWindow(Keybind, Name)
 					
 					local targetColor = value and library.theme.Selected or library.theme.Toggle
 					local targetTextColor = value and library.theme.Selected or library.theme.TextColor
+					local targetStrokeColor = value and library.theme.Selected or library.theme.Border
 					
 					createTween(Toggle.Indicator, {BackgroundColor3 = targetColor}, 0.15)
 					createTween(Toggle.Text, {TextColor3 = targetTextColor}, 0.15)
+					createTween(indicatorStroke, {Color = targetStrokeColor}, 0.15)
 					
-					-- Subtle scale animation
+					-- Enhanced scale animation with bounce
 					local originalSize = Toggle.Indicator.Size
-					createTween(Toggle.Indicator, {Size = UDim2.fromOffset(16, 16)}, 0.08)
+					createTween(Toggle.Indicator, {Size = UDim2.fromOffset(18, 18)}, 0.08)
 					wait(0.08)
-					createTween(Toggle.Indicator, {Size = originalSize}, 0.08)
+					createTween(Toggle.Indicator, {Size = originalSize}, 0.12, Enum.EasingStyle.Back)
 
 					if Toggle.flag and Toggle.flag ~= "" then
 						library.flags[Toggle.flag] = Toggle.value;
@@ -547,7 +689,7 @@ function library:CreateWindow(Keybind, Name)
 					pcall(Toggle.callback, value);
 				end
 
-				Toggle.Main.MouseButton1Down:Connect(function()
+				Toggle.Main.MouseButton1Click:Connect(function()
 					Toggle:Set(not Toggle.value);
 				end)
 
@@ -557,26 +699,26 @@ function library:CreateWindow(Keybind, Name)
 				return Toggle;
 			end
 
-			function Sector:CreateSlider(Text, Min, Defult, Max, Decimals, Callback, Flag)
+			function Sector:CreateSlider(Text, Min, Default, Max, Decimals, Callback, Flag)
 				local Slider = { };
 				Slider.text = Text or "";
 				Slider.callback = Callback or function(value) end;
 				Slider.min = Min or 0;
 				Slider.max = Max or 100;
 				Slider.decimals = Decimals or 1;
-				Slider.default = Defult or Slider.min;
+				Slider.default = Default or Slider.min;
 				Slider.flag = Flag or Text or "";
 
 				Slider.value = Slider.default;
 				local dragging = false;
 
 				Slider.Mainback = Instance.new("Frame", Sector.Items);
-				Slider.Mainback.Size = UDim2.fromOffset(220, 28); -- More compact
+				Slider.Mainback.Size = UDim2.fromOffset(230, 32);
 				Slider.Mainback.BackgroundColor3 = library.theme.BackGround;
 				Slider.Mainback.BorderSizePixel = 0;
 
 				Slider.UICorner = Instance.new("UICorner", Slider.Mainback);
-				Slider.UICorner.CornerRadius = UDim.new(0, 6);
+				Slider.UICorner.CornerRadius = UDim.new(0, 8);
 				
 				addHoverEffect(Slider.Mainback,
 					{BackgroundColor3 = library.theme.BackGroundHover},
@@ -585,7 +727,7 @@ function library:CreateWindow(Keybind, Name)
 
 				Slider.Text = Instance.new("TextLabel", Slider.Mainback);
 				Slider.Text.Position = UDim2.fromScale(0.05, 0);
-				Slider.Text.Size = UDim2.fromOffset(100, 28);
+				Slider.Text.Size = UDim2.fromOffset(110, 32);
 				Slider.Text.Text = Text;
 				Slider.Text.TextColor3 = library.theme.TextColor;
 				Slider.Text.Font = library.theme.Font;
@@ -596,26 +738,26 @@ function library:CreateWindow(Keybind, Name)
 				Slider.Main = Instance.new("TextButton", Slider.Mainback);
 				Slider.Main.BackgroundColor3 = library.theme.Toggle;
 				Slider.Main.Text = "";
-				Slider.Main.Position = UDim2.fromScale(0.55, 0.25);
-				Slider.Main.Size = UDim2.fromOffset(90, 14); -- Smaller slider
+				Slider.Main.Position = UDim2.fromScale(0.52, 0.25);
+				Slider.Main.Size = UDim2.fromOffset(100, 16);
 				Slider.Main.BorderSizePixel = 0;
 				Slider.Main.AutoButtonColor = false;
 				
 				local sliderCorner = Instance.new("UICorner", Slider.Main)
-				sliderCorner.CornerRadius = UDim.new(0, 7)
+				sliderCorner.CornerRadius = UDim.new(0, 8)
 
 				Slider.Slider = Instance.new("Frame", Slider.Main);
 				Slider.Slider.BackgroundColor3 = library.theme.Selected;
 				Slider.Slider.BorderSizePixel = 0;
 				Slider.Slider.Position = UDim2.fromScale(0, 0);
-				Slider.Slider.Size = UDim2.fromOffset(45, 14);
+				Slider.Slider.Size = UDim2.fromOffset(50, 16);
 				
 				local sliderFillCorner = Instance.new("UICorner", Slider.Slider)
-				sliderFillCorner.CornerRadius = UDim.new(0, 7)
+				sliderFillCorner.CornerRadius = UDim.new(0, 8)
 
 				Slider.OutPutText = Instance.new("TextLabel", Slider.Main);
 				Slider.OutPutText.Position = UDim2.fromScale(0, 0);
-				Slider.OutPutText.Size = UDim2.fromOffset(90, 14);
+				Slider.OutPutText.Size = UDim2.fromOffset(100, 16);
 				Slider.OutPutText.BackgroundTransparency = 1;
 				Slider.OutPutText.Font = library.theme.Font;
 				Slider.OutPutText.TextColor3 = library.theme.TextColor;
@@ -648,27 +790,12 @@ function library:CreateWindow(Keybind, Name)
 				Slider:Set(Slider.default);
 
 				function Slider:Refresh()
-					local mousePos = game.Workspace.CurrentCamera:WorldToViewportPoint(game.Players.LocalPlayer:GetMouse().Hit.p);
-					local percent = math.clamp(mousePos.X - Slider.Slider.AbsolutePosition.X, 0, Slider.Main.AbsoluteSize.X) / Slider.Main.AbsoluteSize.X;
+					local mouse = game.Players.LocalPlayer:GetMouse();
+					local percent = math.clamp((mouse.X - Slider.Main.AbsolutePosition.X) / Slider.Main.AbsoluteSize.X, 0, 1);
 					local value = math.floor((Slider.min + (Slider.max - Slider.min) * percent) * Slider.decimals) / Slider.decimals;
 					value = math.clamp(value, Slider.min, Slider.max);
 					Slider:Set(value);
 				end
-
-				Slider.Slider.InputBegan:Connect(function(input)
-					if input.UserInputType == Enum.UserInputType.MouseButton1 then
-						dragging = true;
-						createTween(Slider.Slider, {BackgroundColor3 = library.theme.SelectedHover}, 0.1)
-						Slider:Refresh();
-					end
-				end)
-
-				Slider.Slider.InputEnded:Connect(function(input)
-					if input.UserInputType == Enum.UserInputType.MouseButton1 then
-						dragging = false;
-						createTween(Slider.Slider, {BackgroundColor3 = library.theme.Selected}, 0.2)
-					end
-				end)
 
 				Slider.Main.InputBegan:Connect(function(input)
 					if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -685,7 +812,7 @@ function library:CreateWindow(Keybind, Name)
 					end
 				end)
 
-				game:GetService("UserInputService").InputChanged:Connect(function(input)
+				userinputservice.InputChanged:Connect(function(input)
 					if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
 						Slider:Refresh();
 					end
@@ -709,17 +836,18 @@ function library:CreateWindow(Keybind, Name)
 				DropDown.MainBack = Instance.new("TextButton", Sector.Items);
 				DropDown.MainBack.BackgroundColor3 = library.theme.BackGround;
 				DropDown.MainBack.AutoButtonColor = false;
-				DropDown.MainBack.Size = UDim2.fromOffset(220, 28); -- More compact
+				DropDown.MainBack.Size = UDim2.fromOffset(230, 32);
 				DropDown.MainBack.Text = "";
 
 				DropDown.UICorner = Instance.new("UICorner", DropDown.MainBack);
-				DropDown.UICorner.CornerRadius = UDim.new(0, 6);
+				DropDown.UICorner.CornerRadius = UDim.new(0, 8);
 				
 				addHoverEffect(DropDown.MainBack,
 					{BackgroundColor3 = library.theme.BackGroundHover},
 					{BackgroundColor3 = library.theme.BackGround}
 				)
 				addClickEffect(DropDown.MainBack, 0.98)
+				addRippleEffect(DropDown.MainBack, library.theme.Selected)
 
 				DropDown.TextLabel = Instance.new("TextLabel", DropDown.MainBack);
 				DropDown.TextLabel.Text = DropDown.text;
@@ -727,15 +855,15 @@ function library:CreateWindow(Keybind, Name)
 				DropDown.TextLabel.TextColor3 = library.theme.TextColor;
 				DropDown.TextLabel.TextSize = library.theme.TextSize;
 				DropDown.TextLabel.Font = library.theme.Font;
-				DropDown.TextLabel.Size = UDim2.fromOffset(100, 28);
+				DropDown.TextLabel.Size = UDim2.fromOffset(110, 32);
 				DropDown.TextLabel.Position = UDim2.fromScale(0.05, 0);
 				DropDown.TextLabel.TextXAlignment = Enum.TextXAlignment.Left;
 
 				DropDown.Main = Instance.new("TextButton", DropDown.MainBack);
 				DropDown.Main.BackgroundColor3 = library.theme.Toggle;
 				DropDown.Main.BorderSizePixel = 0;
-				DropDown.Main.Position = UDim2.fromScale(0.55, 0.25);
-				DropDown.Main.Size = UDim2.fromOffset(90, 14); -- Smaller dropdown
+				DropDown.Main.Position = UDim2.fromScale(0.52, 0.25);
+				DropDown.Main.Size = UDim2.fromOffset(100, 16);
 				DropDown.Main.TextSize = library.theme.TextSize - 1;
 				DropDown.Main.TextColor3 = library.theme.TextColor;
 				DropDown.Main.Font = library.theme.Font;
@@ -743,11 +871,11 @@ function library:CreateWindow(Keybind, Name)
 				DropDown.Main.Text = "";
 				
 				local dropdownCorner = Instance.new("UICorner", DropDown.Main)
-				dropdownCorner.CornerRadius = UDim.new(0, 3)
+				dropdownCorner.CornerRadius = UDim.new(0, 4)
 
 				DropDown.SelectedLable = Instance.new("TextLabel", DropDown.Main);
-				DropDown.SelectedLable.Position = UDim2.fromOffset(4, 0);
-				DropDown.SelectedLable.Size = UDim2.fromOffset(70, 14);
+				DropDown.SelectedLable.Position = UDim2.fromOffset(6, 0);
+				DropDown.SelectedLable.Size = UDim2.fromOffset(75, 16);
 				DropDown.SelectedLable.BackgroundTransparency = 1;
 				DropDown.SelectedLable.TextSize = library.theme.TextSize - 1;
 				DropDown.SelectedLable.TextColor3 = library.theme.TextColor;
@@ -757,7 +885,7 @@ function library:CreateWindow(Keybind, Name)
 
 				DropDown.Arrow = Instance.new("TextLabel", DropDown.Main);
 				DropDown.Arrow.Position = UDim2.fromScale(0.8, 0);
-				DropDown.Arrow.Size = UDim2.fromOffset(14, 14);
+				DropDown.Arrow.Size = UDim2.fromOffset(16, 16);
 				DropDown.Arrow.BackgroundTransparency = 1;
 				DropDown.Arrow.TextSize = library.theme.TextSize - 2;
 				DropDown.Arrow.TextColor3 = library.theme.TextColor;
@@ -769,15 +897,15 @@ function library:CreateWindow(Keybind, Name)
 				DropDown.Itemsframe.BorderSizePixel = 0;
 				DropDown.Itemsframe.BackgroundColor3 = library.theme.BackGround;
 				DropDown.Itemsframe.Position = UDim2.fromOffset(0, DropDown.Main.Size.Y.Offset + 4);
-				DropDown.Itemsframe.ScrollBarThickness = 1;
+				DropDown.Itemsframe.ScrollBarThickness = 2;
 				DropDown.Itemsframe.ScrollBarImageColor3 = library.theme.Selected;
 				DropDown.Itemsframe.ZIndex = 8;
-				DropDown.Itemsframe.ScrollingDirection = "Y";
+				DropDown.Itemsframe.ScrollingDirection = Enum.ScrollingDirection.Y;
 				DropDown.Itemsframe.Visible = false;
 				DropDown.Itemsframe.CanvasSize = UDim2.fromOffset(DropDown.Main.AbsoluteSize.X, 0);
 				
 				local itemsCorner = Instance.new("UICorner", DropDown.Itemsframe)
-				itemsCorner.CornerRadius = UDim.new(0, 4)
+				itemsCorner.CornerRadius = UDim.new(0, 6)
 				
 				local itemsStroke = Instance.new("UIStroke", DropDown.Itemsframe)
 				itemsStroke.Color = library.theme.Border
@@ -850,7 +978,7 @@ function library:CreateWindow(Keybind, Name)
 					Item.TextColor3 = library.theme.TextColor;
 					Item.BorderSizePixel = 0;
 					Item.Position = UDim2.fromOffset(0, 0);
-					Item.Size = UDim2.fromOffset(90, 16); -- Smaller items
+					Item.Size = UDim2.fromOffset(100, 18);
 					Item.BackgroundTransparency = 0;
 					Item.ZIndex = 9;
 					Item.Text = v;
@@ -864,8 +992,9 @@ function library:CreateWindow(Keybind, Name)
 						{BackgroundColor3 = library.theme.SelectedHover, TextColor3 = Color3.fromRGB(255, 255, 255)},
 						{BackgroundColor3 = library.theme.Toggle, TextColor3 = library.theme.TextColor}
 					)
+					addRippleEffect(Item, library.theme.Selected)
 
-					Item.MouseButton1Down:Connect(function()
+					Item.MouseButton1Click:Connect(function()
 						if DropDown.multichoice then
 							if DropDown:isSelected(v) then
 								for i2, v2 in pairs(DropDown.values) do
@@ -893,7 +1022,7 @@ function library:CreateWindow(Keybind, Name)
 						return
 					end)
 
-					game:GetService("RunService").RenderStepped:Connect(function()
+					runservice.Heartbeat:Connect(function()
 						if DropDown.multichoice and DropDown:isSelected(v) or DropDown.values[1] == v then
 							Item.BackgroundColor3 = library.theme.Selected;
 							Item.Text = v;
@@ -904,8 +1033,8 @@ function library:CreateWindow(Keybind, Name)
 					end)
 
 					table.insert(DropDown.items, v);
-					DropDown.Itemsframe.Size = UDim2.fromOffset(DropDown.Main.Size.X.Offset, math.clamp(#DropDown.items * Item.AbsoluteSize.Y, 16, 120) + 2);
-					DropDown.Itemsframe.CanvasSize = UDim2.fromOffset(DropDown.Itemsframe.AbsoluteSize.X, (#DropDown.items * Item.AbsoluteSize.Y) + 2);
+					DropDown.Itemsframe.Size = UDim2.fromOffset(DropDown.Main.Size.X.Offset, math.clamp(#DropDown.items * Item.AbsoluteSize.Y, 18, 140) + 4);
+					DropDown.Itemsframe.CanvasSize = UDim2.fromOffset(DropDown.Itemsframe.AbsoluteSize.X, (#DropDown.items * Item.AbsoluteSize.Y) + 4);
 
 					DropDown.IgnoreBackButtons.Size = DropDown.Itemsframe.Size;
 				end
@@ -919,11 +1048,11 @@ function library:CreateWindow(Keybind, Name)
 							end
 						end
 
-						DropDown.Itemsframe.Size = UDim2.fromOffset(DropDown.Main.Size.X.Offset, math.clamp(#DropDown.items * item.AbsoluteSize.Y, 16, 120) + 2);
-						DropDown.Itemsframe.CanvasSize = UDim2.fromOffset(DropDown.Itemsframe.AbsoluteSize.X, (#DropDown.items * item.AbsoluteSize.Y) + 2);
+						DropDown.Itemsframe.Size = UDim2.fromOffset(DropDown.Main.Size.X.Offset, math.clamp(#DropDown.items * item.AbsoluteSize.Y, 18, 140) + 4);
+						DropDown.Itemsframe.CanvasSize = UDim2.fromOffset(DropDown.Itemsframe.AbsoluteSize.X, (#DropDown.items * item.AbsoluteSize.Y) + 4);
 
 						DropDown.IgnoreBackButtons.Size = DropDown.Itemsframe.Size;
-						item:Remove();
+						item:Destroy();
 					end
 				end 
 
@@ -935,7 +1064,7 @@ function library:CreateWindow(Keybind, Name)
 					DropDown:Set(DropDown.default);
 				end
 
-				local MouseButton1Down = function()
+				local MouseButton1Click = function()
 					if not DropDown.Itemsframe.Visible then
 						if DropDown.items and #DropDown.items ~= 0 then
 							createTween(DropDown.Arrow, {Rotation = 180}, 0.15)
@@ -947,7 +1076,7 @@ function library:CreateWindow(Keybind, Name)
 							
 							DropDown.Itemsframe.Size = UDim2.fromOffset(DropDown.Main.Size.X.Offset, 0)
 							createTween(DropDown.Itemsframe, {
-								Size = UDim2.fromOffset(DropDown.Main.Size.X.Offset, math.clamp(#DropDown.items * 16, 16, 120) + 2)
+								Size = UDim2.fromOffset(DropDown.Main.Size.X.Offset, math.clamp(#DropDown.items * 18, 18, 140) + 4)
 							}, 0.15)
 						end
 					else
@@ -962,45 +1091,46 @@ function library:CreateWindow(Keybind, Name)
 					end
 				end
 
-				DropDown.MainBack.MouseButton1Down:Connect(MouseButton1Down)
-				DropDown.Main.MouseButton1Down:Connect(MouseButton1Down)
+				DropDown.MainBack.MouseButton1Click:Connect(MouseButton1Click)
+				DropDown.Main.MouseButton1Click:Connect(MouseButton1Click)
 
 				Sector:FixSize();
 				table.insert(library.items, DropDown);
 				return DropDown;
 			end
 
-			function Sector:CreateColorPicker(Text, Defult, CallBack, Flag)
+			function Sector:CreateColorPicker(Text, Default, CallBack, Flag)
 				local ColorPicker = { };
 
 				ColorPicker.callback = CallBack or function() end;
-				ColorPicker.default = Defult or Color3.fromRGB(255, 255, 255);
+				ColorPicker.default = Default or Color3.fromRGB(255, 255, 255);
 				ColorPicker.value = ColorPicker.default;
 				ColorPicker.flag = Flag or (Text or "");
 
 				ColorPicker.MainBack = Instance.new("TextButton", Sector.Items);
 				ColorPicker.MainBack.BackgroundColor3 = library.theme.BackGround;
 				ColorPicker.MainBack.AutoButtonColor = false;
-				ColorPicker.MainBack.Size = UDim2.fromOffset(220, 28); -- More compact
+				ColorPicker.MainBack.Size = UDim2.fromOffset(230, 32);
 				ColorPicker.MainBack.Text = "";
 
 				ColorPicker.UiCorner = Instance.new("UICorner", ColorPicker.MainBack);
-				ColorPicker.UiCorner.CornerRadius = UDim.new(0, 6);
+				ColorPicker.UiCorner.CornerRadius = UDim.new(0, 8);
 				
 				addHoverEffect(ColorPicker.MainBack,
 					{BackgroundColor3 = library.theme.BackGroundHover},
 					{BackgroundColor3 = library.theme.BackGround}
 				)
 				addClickEffect(ColorPicker.MainBack, 0.98)
+				addRippleEffect(ColorPicker.MainBack, library.theme.Selected)
 				
 				ColorPicker.Indicator = Instance.new("Frame", ColorPicker.MainBack);
-				ColorPicker.Indicator.Position = UDim2.fromScale(0.88, 0.25);
-				ColorPicker.Indicator.Size = UDim2.fromOffset(14, 14); -- Smaller indicator
+				ColorPicker.Indicator.Position = UDim2.fromScale(0.85, 0.25);
+				ColorPicker.Indicator.Size = UDim2.fromOffset(16, 16);
 				ColorPicker.Indicator.BackgroundColor3 = ColorPicker.default;
 				ColorPicker.Indicator.BorderSizePixel = 0;
 				
 				local indicatorCorner = Instance.new("UICorner", ColorPicker.Indicator)
-				indicatorCorner.CornerRadius = UDim.new(0, 3)
+				indicatorCorner.CornerRadius = UDim.new(0, 4)
 				
 				local indicatorStroke = Instance.new("UIStroke", ColorPicker.Indicator)
 				indicatorStroke.Color = library.theme.Border
@@ -1012,7 +1142,7 @@ function library:CreateWindow(Keybind, Name)
 				ColorPicker.TextLabel.TextColor3 = library.theme.TextColor;
 				ColorPicker.TextLabel.TextSize = library.theme.TextSize;
 				ColorPicker.TextLabel.Font = library.theme.Font;
-				ColorPicker.TextLabel.Size = UDim2.fromOffset(150, 28);
+				ColorPicker.TextLabel.Size = UDim2.fromOffset(170, 32);
 				ColorPicker.TextLabel.Position = UDim2.fromScale(0.05, 0);
 				ColorPicker.TextLabel.TextXAlignment = Enum.TextXAlignment.Left;
 
@@ -1022,7 +1152,7 @@ function library:CreateWindow(Keybind, Name)
 				ColorPicker.MainPicker.Visible = false;
 				ColorPicker.MainPicker.AutoButtonColor = false;
 				ColorPicker.MainPicker.Text = "";
-				ColorPicker.MainPicker.Size = UDim2.fromOffset(160, 180); -- Smaller picker
+				ColorPicker.MainPicker.Size = UDim2.fromOffset(180, 200);
 				ColorPicker.MainPicker.BorderSizePixel = 0;
 				ColorPicker.MainPicker.BackgroundColor3 = library.theme.BackGround2;
 				ColorPicker.MainPicker.Rotation = 0.000000000000001;
@@ -1030,7 +1160,7 @@ function library:CreateWindow(Keybind, Name)
 				window.OpenedColorPickers[ColorPicker.MainPicker] = false;
 				
 				local pickerCorner = Instance.new("UICorner", ColorPicker.MainPicker)
-				pickerCorner.CornerRadius = UDim.new(0, 6)
+				pickerCorner.CornerRadius = UDim.new(0, 8)
 				
 				local pickerStroke = Instance.new("UIStroke", ColorPicker.MainPicker)
 				pickerStroke.Color = library.theme.Border
@@ -1038,34 +1168,34 @@ function library:CreateWindow(Keybind, Name)
 				
 				ColorPicker.hue = Instance.new("ImageLabel", ColorPicker.MainPicker);
 				ColorPicker.hue.ZIndex = 101;
-				ColorPicker.hue.Position = UDim2.new(0, 3, 0, 3);
-				ColorPicker.hue.Size = UDim2.new(0, 152, 0, 152); -- Smaller hue selector
+				ColorPicker.hue.Position = UDim2.new(0, 5, 0, 5);
+				ColorPicker.hue.Size = UDim2.new(0, 170, 0, 170);
 				ColorPicker.hue.Image = "rbxassetid://4155801252";
 				ColorPicker.hue.ScaleType = Enum.ScaleType.Stretch;
 				ColorPicker.hue.BackgroundColor3 = Color3.new(1, 0, 0);
 				ColorPicker.hue.BorderColor3 = library.theme.Border;
 				
 				local hueCorner = Instance.new("UICorner", ColorPicker.hue)
-				hueCorner.CornerRadius = UDim.new(0, 4)
+				hueCorner.CornerRadius = UDim.new(0, 6)
 				
 				ColorPicker.hueselectorpointer = Instance.new("ImageLabel", ColorPicker.MainPicker);
 				ColorPicker.hueselectorpointer.ZIndex = 101;
 				ColorPicker.hueselectorpointer.BackgroundTransparency = 1;
 				ColorPicker.hueselectorpointer.BorderSizePixel = 0;
 				ColorPicker.hueselectorpointer.Position = UDim2.new(0, 0, 0, 0);
-				ColorPicker.hueselectorpointer.Size = UDim2.new(0, 6, 0, 6); -- Smaller pointer
+				ColorPicker.hueselectorpointer.Size = UDim2.new(0, 8, 0, 8);
 				ColorPicker.hueselectorpointer.Image = "rbxassetid://6885856475";
 				
 				ColorPicker.selector = Instance.new("TextLabel", ColorPicker.MainPicker);
 				ColorPicker.selector.ZIndex = 100;
-				ColorPicker.selector.Position = UDim2.new(0, 3, 0, 162);
-				ColorPicker.selector.Size = UDim2.new(0, 153, 0, 8); -- Smaller selector
+				ColorPicker.selector.Position = UDim2.new(0, 5, 0, 180);
+				ColorPicker.selector.Size = UDim2.new(0, 170, 0, 10);
 				ColorPicker.selector.BackgroundColor3 = Color3.fromRGB(255, 255, 255);
 				ColorPicker.selector.BorderColor3 = library.theme.Border;
 				ColorPicker.selector.Text = "";
 				
 				local selectorCorner = Instance.new("UICorner", ColorPicker.selector)
-				selectorCorner.CornerRadius = UDim.new(0, 4)
+				selectorCorner.CornerRadius = UDim.new(0, 5)
 				
 				ColorPicker.gradient = Instance.new("UIGradient", ColorPicker.selector);
 				ColorPicker.gradient.Color = ColorSequence.new({ 
@@ -1082,7 +1212,7 @@ function library:CreateWindow(Keybind, Name)
 				ColorPicker.pointer.ZIndex = 101;
 				ColorPicker.pointer.BackgroundColor3 = library.theme.Border;
 				ColorPicker.pointer.Position = UDim2.new(0, 0, 0, 0);
-				ColorPicker.pointer.Size = UDim2.new(0, 2, 0, 8);
+				ColorPicker.pointer.Size = UDim2.new(0, 3, 0, 10);
 				ColorPicker.pointer.BorderColor3 = library.theme.BackGround;
 
 				if ColorPicker.flag and ColorPicker.flag ~= "" then
@@ -1090,8 +1220,9 @@ function library:CreateWindow(Keybind, Name)
 				end
 
 				function ColorPicker:RefreshHue()
-					local x = (game.Players.LocalPlayer:GetMouse().X - ColorPicker.hue.AbsolutePosition.X) / ColorPicker.hue.AbsoluteSize.X;
-					local y = (game.Players.LocalPlayer:GetMouse().Y - ColorPicker.hue.AbsolutePosition.Y) / ColorPicker.hue.AbsoluteSize.Y;
+					local mouse = game.Players.LocalPlayer:GetMouse()
+					local x = (mouse.X - ColorPicker.hue.AbsolutePosition.X) / ColorPicker.hue.AbsoluteSize.X;
+					local y = (mouse.Y - ColorPicker.hue.AbsolutePosition.Y) / ColorPicker.hue.AbsoluteSize.Y;
 					createTween(ColorPicker.hueselectorpointer, {
 						Position = UDim2.new(math.clamp(x * ColorPicker.hue.AbsoluteSize.X, 0.5, 0.952 * ColorPicker.hue.AbsoluteSize.X) / ColorPicker.hue.AbsoluteSize.X, 0, math.clamp(y * ColorPicker.hue.AbsoluteSize.Y, 0.5, 0.885 * ColorPicker.hue.AbsoluteSize.Y) / ColorPicker.hue.AbsoluteSize.Y, 0)
 					}, 0.03)
@@ -1099,7 +1230,8 @@ function library:CreateWindow(Keybind, Name)
 				end
 
 				function ColorPicker:RefreshSelector()
-					local pos = math.clamp((game.Players.LocalPlayer:GetMouse().X - ColorPicker.hue.AbsolutePosition.X) / ColorPicker.hue.AbsoluteSize.X, 0, 1);
+					local mouse = game.Players.LocalPlayer:GetMouse()
+					local pos = math.clamp((mouse.X - ColorPicker.selector.AbsolutePosition.X) / ColorPicker.selector.AbsoluteSize.X, 0, 1);
 					ColorPicker.color = 1 - pos;
 					createTween(ColorPicker.pointer, {Position = UDim2.new(pos, 0, 0, 0)}, 0.03)
 					ColorPicker.hue.BackgroundColor3 = Color3.fromHSV(1 - pos, 1, 1);
@@ -1156,7 +1288,7 @@ function library:CreateWindow(Keybind, Name)
 					end
 				end)
 
-				game:GetService("UserInputService").InputChanged:Connect(function(input)
+				userinputservice.InputChanged:Connect(function(input)
 					if dragging_selector and input.UserInputType == Enum.UserInputType.MouseMovement then
 						ColorPicker:RefreshSelector();
 					end
@@ -1179,7 +1311,7 @@ function library:CreateWindow(Keybind, Name)
 						if not ColorPicker.MainPicker.Visible then
 							ColorPicker.MainPicker.Visible = true;
 							ColorPicker.MainPicker.Size = UDim2.fromOffset(0, 0)
-							createTween(ColorPicker.MainPicker, {Size = UDim2.fromOffset(160, 180)}, 0.2, Enum.EasingStyle.Back)
+							createTween(ColorPicker.MainPicker, {Size = UDim2.fromOffset(180, 200)}, 0.2, Enum.EasingStyle.Back)
 						else
 							createTween(ColorPicker.MainPicker, {Size = UDim2.fromOffset(0, 0)}, 0.15)
 							wait(0.15)
@@ -1219,17 +1351,18 @@ function library:CreateWindow(Keybind, Name)
 				keybind.MainBack = Instance.new("TextButton", Sector.Items);
 				keybind.MainBack.BackgroundColor3 = library.theme.BackGround;
 				keybind.MainBack.AutoButtonColor = false;
-				keybind.MainBack.Size = UDim2.fromOffset(220, 28); -- More compact
+				keybind.MainBack.Size = UDim2.fromOffset(230, 32);
 				keybind.MainBack.Text = "";
 
 				keybind.UICorner = Instance.new("UICorner", keybind.MainBack);
-				keybind.UICorner.CornerRadius = UDim.new(0, 6);
+				keybind.UICorner.CornerRadius = UDim.new(0, 8);
 				
 				addHoverEffect(keybind.MainBack,
 					{BackgroundColor3 = library.theme.BackGroundHover},
 					{BackgroundColor3 = library.theme.BackGround}
 				)
 				addClickEffect(keybind.MainBack, 0.98)
+				addRippleEffect(keybind.MainBack, library.theme.Selected)
 
 				keybind.TextLabel = Instance.new("TextLabel", keybind.MainBack);
 				keybind.TextLabel.Text = keybind.text;
@@ -1237,15 +1370,15 @@ function library:CreateWindow(Keybind, Name)
 				keybind.TextLabel.TextColor3 = library.theme.TextColor;
 				keybind.TextLabel.TextSize = library.theme.TextSize;
 				keybind.TextLabel.Font = library.theme.Font;
-				keybind.TextLabel.Size = UDim2.fromOffset(100, 28);
+				keybind.TextLabel.Size = UDim2.fromOffset(110, 32);
 				keybind.TextLabel.Position = UDim2.fromScale(0.05, 0);
 				keybind.TextLabel.TextXAlignment = Enum.TextXAlignment.Left;
 
 				keybind.Main = Instance.new("TextButton", keybind.MainBack);
 				keybind.Main.BorderSizePixel = 0;
 				keybind.Main.BackgroundColor3 = library.theme.Toggle;
-				keybind.Main.Size = UDim2.fromOffset(90, 14); -- Smaller keybind button
-				keybind.Main.Position = UDim2.fromScale(0.55, 0.25);
+				keybind.Main.Size = UDim2.fromOffset(100, 16);
+				keybind.Main.Position = UDim2.fromScale(0.52, 0.25);
 				keybind.Main.Text = text;
 				keybind.Main.Font = library.theme.Font;
 				keybind.Main.TextColor3 = library.theme.TextColor;
@@ -1254,14 +1387,14 @@ function library:CreateWindow(Keybind, Name)
 				keybind.Main.AutoButtonColor = false;
 				
 				local keybindCorner = Instance.new("UICorner", keybind.Main)
-				keybindCorner.CornerRadius = UDim.new(0, 3)
+				keybindCorner.CornerRadius = UDim.new(0, 4)
 				
 				addHoverEffect(keybind.Main,
 					{BackgroundColor3 = library.theme.ToggleHover, TextColor3 = library.theme.Selected},
 					{BackgroundColor3 = library.theme.Toggle, TextColor3 = library.theme.TextColor}
 				)
 				
-				keybind.Main.MouseButton1Down:Connect(function()
+				keybind.Main.MouseButton1Click:Connect(function()
 					keybind.Main.Text = "...";
 					local pulseConnection
 					pulseConnection = runservice.Heartbeat:Connect(function()
@@ -1304,7 +1437,7 @@ function library:CreateWindow(Keybind, Name)
 					return keybind.value;
 				end
 
-				game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
+				userinputservice.InputBegan:Connect(function(input, gameProcessed)
 					if not gameProcessed then
 						if keybind.Main.Text == "..." then
 							if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode ~= Enum.KeyCode.Backspace then
@@ -1322,67 +1455,67 @@ function library:CreateWindow(Keybind, Name)
 				return keybind;
 			end
 
-			function Sector:CreateCoppyText(Text)
-				local CoppyText = { };
+			function Sector:CreateCopyText(Text)
+				local CopyText = { };
 
-				CoppyText.MainBack = Instance.new("TextButton", Sector.Items);
-				CoppyText.MainBack.BackgroundColor3 = library.theme.BackGround;
-				CoppyText.MainBack.AutoButtonColor = false;
-				CoppyText.MainBack.Size = UDim2.fromOffset(220, 28); -- More compact
-				CoppyText.MainBack.Text = "";
+				CopyText.MainBack = Instance.new("TextButton", Sector.Items);
+				CopyText.MainBack.BackgroundColor3 = library.theme.BackGround;
+				CopyText.MainBack.AutoButtonColor = false;
+				CopyText.MainBack.Size = UDim2.fromOffset(230, 32);
+				CopyText.MainBack.Text = "";
 
-				CoppyText.UICorner = Instance.new("UICorner", CoppyText.MainBack);
-				CoppyText.UICorner.CornerRadius = UDim.new(0, 6);
+				CopyText.UICorner = Instance.new("UICorner", CopyText.MainBack);
+				CopyText.UICorner.CornerRadius = UDim.new(0, 8);
 				
-				addHoverEffect(CoppyText.MainBack,
+				addHoverEffect(CopyText.MainBack,
 					{BackgroundColor3 = library.theme.BackGroundHover},
 					{BackgroundColor3 = library.theme.BackGround}
 				)
 
-				CoppyText.TextLabel = Instance.new("TextBox", CoppyText.MainBack);
-				CoppyText.TextLabel.Text = Text;
-				CoppyText.TextLabel.ClearTextOnFocus = false;
-				CoppyText.TextLabel.Interactable = true;
-				CoppyText.TextLabel.TextEditable = false;
-				CoppyText.TextLabel.Active = false;
-				CoppyText.TextLabel.BackgroundTransparency = 1;
-				CoppyText.TextLabel.TextColor3 = library.theme.TextColor;
-				CoppyText.TextLabel.TextSize = library.theme.TextSize;
-				CoppyText.TextLabel.Font = library.theme.Font;
-				CoppyText.TextLabel.Size = UDim2.fromOffset(220, 28);
-				CoppyText.TextLabel.Position = UDim2.fromScale(0, 0);
-				CoppyText.TextLabel.TextXAlignment = Enum.TextXAlignment.Center;
+				CopyText.TextLabel = Instance.new("TextBox", CopyText.MainBack);
+				CopyText.TextLabel.Text = Text;
+				CopyText.TextLabel.ClearTextOnFocus = false;
+				CopyText.TextLabel.Interactable = true;
+				CopyText.TextLabel.TextEditable = false;
+				CopyText.TextLabel.Active = false;
+				CopyText.TextLabel.BackgroundTransparency = 1;
+				CopyText.TextLabel.TextColor3 = library.theme.TextColor;
+				CopyText.TextLabel.TextSize = library.theme.TextSize;
+				CopyText.TextLabel.Font = library.theme.Font;
+				CopyText.TextLabel.Size = UDim2.fromOffset(230, 32);
+				CopyText.TextLabel.Position = UDim2.fromScale(0, 0);
+				CopyText.TextLabel.TextXAlignment = Enum.TextXAlignment.Center;
 
 				Sector:FixSize();
-				table.insert(library.items, CoppyText);
-				return CoppyText;
+				table.insert(library.items, CopyText);
+				return CopyText;
 			end
 
-			function Sector:CreateLable(Text)
-				local Lable = { };
+			function Sector:CreateLabel(Text)
+				local Label = { };
 
-				Lable.MainBack = Instance.new("TextButton", Sector.Items);
-				Lable.MainBack.BackgroundColor3 = library.theme.BackGround;
-				Lable.MainBack.AutoButtonColor = false;
-				Lable.MainBack.Size = UDim2.fromOffset(220, 28); -- More compact
-				Lable.MainBack.Text = "";
+				Label.MainBack = Instance.new("TextButton", Sector.Items);
+				Label.MainBack.BackgroundColor3 = library.theme.BackGround;
+				Label.MainBack.AutoButtonColor = false;
+				Label.MainBack.Size = UDim2.fromOffset(230, 32);
+				Label.MainBack.Text = "";
 
-				Lable.UICorner = Instance.new("UICorner", Lable.MainBack);
-				Lable.UICorner.CornerRadius = UDim.new(0, 6);
+				Label.UICorner = Instance.new("UICorner", Label.MainBack);
+				Label.UICorner.CornerRadius = UDim.new(0, 8);
 
-				Lable.TextLabel = Instance.new("TextLabel", Lable.MainBack);
-				Lable.TextLabel.Text = Text;
-				Lable.TextLabel.BackgroundTransparency = 1;
-				Lable.TextLabel.TextColor3 = library.theme.TextColor;
-				Lable.TextLabel.TextSize = library.theme.TextSize;
-				Lable.TextLabel.Font = library.theme.Font;
-				Lable.TextLabel.Size = UDim2.fromOffset(220, 28);
-				Lable.TextLabel.Position = UDim2.fromScale(0, 0);
-				Lable.TextLabel.TextXAlignment = Enum.TextXAlignment.Center;
+				Label.TextLabel = Instance.new("TextLabel", Label.MainBack);
+				Label.TextLabel.Text = Text;
+				Label.TextLabel.BackgroundTransparency = 1;
+				Label.TextLabel.TextColor3 = library.theme.TextColor;
+				Label.TextLabel.TextSize = library.theme.TextSize;
+				Label.TextLabel.Font = library.theme.Font;
+				Label.TextLabel.Size = UDim2.fromOffset(230, 32);
+				Label.TextLabel.Position = UDim2.fromScale(0, 0);
+				Label.TextLabel.TextXAlignment = Enum.TextXAlignment.Center;
 
 				Sector:FixSize();
-				table.insert(library.items, Lable);
-				return Lable;
+				table.insert(library.items, Label);
+				return Label;
 			end
 
 			function Sector:CreateTextBox(Text, Default, Callback, Flag)
@@ -1396,11 +1529,11 @@ function library:CreateWindow(Keybind, Name)
 				TextBox.MainBack = Instance.new("TextButton", Sector.Items);
 				TextBox.MainBack.BackgroundColor3 = library.theme.BackGround;
 				TextBox.MainBack.AutoButtonColor = false;
-				TextBox.MainBack.Size = UDim2.fromOffset(220, 28); -- More compact
+				TextBox.MainBack.Size = UDim2.fromOffset(230, 32);
 				TextBox.MainBack.Text = "";
 
 				TextBox.UICorner = Instance.new("UICorner", TextBox.MainBack);
-				TextBox.UICorner.CornerRadius = UDim.new(0, 6);
+				TextBox.UICorner.CornerRadius = UDim.new(0, 8);
 				
 				addHoverEffect(TextBox.MainBack,
 					{BackgroundColor3 = library.theme.BackGroundHover},
@@ -1413,13 +1546,13 @@ function library:CreateWindow(Keybind, Name)
 				TextBox.TextLabel.TextColor3 = library.theme.TextColor;
 				TextBox.TextLabel.TextSize = library.theme.TextSize;
 				TextBox.TextLabel.Font = library.theme.Font;
-				TextBox.TextLabel.Size = UDim2.fromOffset(100, 28);
+				TextBox.TextLabel.Size = UDim2.fromOffset(110, 32);
 				TextBox.TextLabel.Position = UDim2.fromScale(0.05, 0);
 				TextBox.TextLabel.TextXAlignment = Enum.TextXAlignment.Left;
 
 				TextBox.Main = Instance.new("TextBox", TextBox.MainBack);
-				TextBox.Main.Position = UDim2.fromScale(0.55, 0.25);
-				TextBox.Main.Size = UDim2.fromOffset(90, 14); -- Smaller textbox
+				TextBox.Main.Position = UDim2.fromScale(0.52, 0.25);
+				TextBox.Main.Size = UDim2.fromOffset(100, 16);
 				TextBox.Main.BackgroundColor3 = library.theme.Toggle;
 				TextBox.Main.BorderSizePixel = 0;
 				TextBox.Main.Text = "";
@@ -1429,7 +1562,7 @@ function library:CreateWindow(Keybind, Name)
 				TextBox.Main.ClearTextOnFocus = false;
 				
 				local textboxCorner = Instance.new("UICorner", TextBox.Main)
-				textboxCorner.CornerRadius = UDim.new(0, 3)
+				textboxCorner.CornerRadius = UDim.new(0, 4)
 				
 				TextBox.Main.Focused:Connect(function()
 					createTween(TextBox.Main, {
@@ -1483,7 +1616,7 @@ function library:CreateWindow(Keybind, Name)
 				Button.MainBack = Instance.new("TextButton", Sector.Items);
 				Button.MainBack.BackgroundColor3 = library.theme.BackGround;
 				Button.MainBack.AutoButtonColor = false;
-				Button.MainBack.Size = UDim2.fromOffset(220, 28); -- More compact
+				Button.MainBack.Size = UDim2.fromOffset(230, 32);
 				Button.MainBack.Text = "";
 				Button.MainBack.Text = Button.text;
 				Button.MainBack.Font = library.theme.Font;
@@ -1491,34 +1624,16 @@ function library:CreateWindow(Keybind, Name)
 				Button.MainBack.TextSize = library.theme.TextSize;
 
 				Button.UICorner = Instance.new("UICorner", Button.MainBack);
-				Button.UICorner.CornerRadius = UDim.new(0, 6);
+				Button.UICorner.CornerRadius = UDim.new(0, 8);
 				
 				addHoverEffect(Button.MainBack,
 					{BackgroundColor3 = library.theme.Selected, TextColor3 = Color3.fromRGB(255, 255, 255)},
 					{BackgroundColor3 = library.theme.BackGround, TextColor3 = library.theme.TextColor}
 				)
 				addClickEffect(Button.MainBack, 0.98)
+				addRippleEffect(Button.MainBack, library.theme.Selected)
 				
 				Button.MainBack.MouseButton1Click:Connect(function()
-					-- Add click ripple effect
-					local ripple = Instance.new("Frame", Button.MainBack)
-					ripple.Name = "Ripple"
-					ripple.BackgroundColor3 = library.theme.Selected
-					ripple.BackgroundTransparency = 0.5
-					ripple.BorderSizePixel = 0
-					ripple.Size = UDim2.fromOffset(0, 0)
-					ripple.Position = UDim2.fromScale(0.5, 0.5)
-					ripple.AnchorPoint = Vector2.new(0.5, 0.5)
-					
-					local rippleCorner = Instance.new("UICorner", ripple)
-					rippleCorner.CornerRadius = UDim.new(1, 0)
-					
-					createTween(ripple, {
-						Size = UDim2.fromOffset(250, 250),
-						BackgroundTransparency = 1
-					}, 0.4)
-					
-					game:GetService("Debris"):AddItem(ripple, 0.4)
 					Button.callback()
 				end);
 
@@ -1541,7 +1656,7 @@ function library:CreateWindow(Keybind, Name)
 
 				ConfigSystem.sector = tab:CreateSector("Configs", side or "left");
 
-				local ConfigName = ConfigSystem.sector:CreateTextBox("Config Name", "", ConfigName, function() end, "");
+				local ConfigName = ConfigSystem.sector:CreateTextBox("Config Name", "", function() end, "");
 				local default = tostring(listfiles(ConfigSystem.configFolder)[1] or ""):gsub(ConfigSystem.configFolder .. "\\", ""):gsub(".txt", "");
 				local Config = ConfigSystem.sector:CreateDropDown("Configs", {}, default, false, function() end, "");
 				for i,v in pairs(listfiles(ConfigSystem.configFolder)) do
@@ -1658,7 +1773,7 @@ function library:CreateWindow(Keybind, Name)
 				end);
 			else
 				ConfigSystem.sector = tab:CreateSector("Configs", side or "left");
-				ConfigSystem.sector:CreateLable("Your Executor Is Not Supported");
+				ConfigSystem.sector:CreateLabel("Your Executor Is Not Supported");
 			end
 
 			return ConfigSystem;
