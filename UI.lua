@@ -2,7 +2,6 @@ local library = {
 	flags = { };
 	items = { };
 }
-
 local StarterGUI = game:GetService("Players").LocalPlayer.PlayerGui;
 local CoreGui = game:FindFirstChild("CoreGui");
 local textservice = game:GetService("TextService");
@@ -32,7 +31,7 @@ library.theme = {
 	SelectedActive = Color3.fromRGB(70, 0, 200);
 	
 	-- Text colors
-	Font = Enum.Font.Inter;
+	Font = Enum.Font.Gotham; -- Changed from Inter to Gotham
 	TextSize = 13;
 	TextColor = Color3.fromRGB(240, 240, 245);
 	TextColorDimmed = Color3.fromRGB(160, 160, 170);
