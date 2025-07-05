@@ -14,11 +14,11 @@ local UserInputService = game:GetService("UserInputService")
 
 -- Enhanced theme with refined dark aesthetics
 library.theme = {
-	-- Background colors
-	BackGround = Color3.fromRGB(25, 25, 30);
-	BackGround2 = Color3.fromRGB(35, 35, 40);
-	BackGroundHover = Color3.fromRGB(45, 45, 50);
-	BackGroundActive = Color3.fromRGB(55, 55, 60);
+	-- Background colors - Much darker theme
+	BackGround = Color3.fromRGB(18, 18, 18);
+	BackGround2 = Color3.fromRGB(25, 25, 25);
+	BackGroundHover = Color3.fromRGB(35, 35, 35);
+	BackGroundActive = Color3.fromRGB(45, 45, 45);
 	
 	-- Border colors
 	Border = Color3.fromRGB(60, 60, 65);
