@@ -12,32 +12,32 @@ local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
--- Enhanced theme with refined dark aesthetics
+-- Enhanced theme with better contrast and readability
 library.theme = {
-	-- Background colors
-	BackGround = Color3.fromRGB(0, 0, 0);
-	BackGround2 = Color3.fromRGB(15, 15, 15);
-	BackGroundHover = Color3.fromRGB(25, 25, 25);
-	BackGroundActive = Color3.fromRGB(35, 35, 35);
+	-- Background colors - improved contrast
+	BackGround = Color3.fromRGB(25, 25, 30);
+	BackGround2 = Color3.fromRGB(35, 35, 40);
+	BackGroundHover = Color3.fromRGB(45, 45, 50);
+	BackGroundActive = Color3.fromRGB(55, 55, 60);
 	
 	-- Border colors
-	Border = Color3.fromRGB(40, 40, 40);
+	Border = Color3.fromRGB(60, 60, 65);
 	BorderHover = Color3.fromRGB(85, 0, 255);
 	BorderActive = Color3.fromRGB(100, 20, 255);
 	
 	-- Interactive elements
-	Toggle = Color3.fromRGB(30, 30, 30);
-	ToggleHover = Color3.fromRGB(45, 45, 45);
+	Toggle = Color3.fromRGB(40, 40, 45);
+	ToggleHover = Color3.fromRGB(55, 55, 60);
 	Selected = Color3.fromRGB(85, 0, 255);
 	SelectedHover = Color3.fromRGB(100, 20, 255);
 	SelectedActive = Color3.fromRGB(70, 0, 200);
 	
-	-- Text colors
+	-- Text colors - improved readability
 	Font = Enum.Font.Gotham;
 	TextSize = 13;
-	TextColor = Color3.fromRGB(255, 255, 255);
-	TextColorDimmed = Color3.fromRGB(180, 180, 180);
-	TextColorMuted = Color3.fromRGB(120, 120, 120);
+	TextColor = Color3.fromRGB(240, 240, 245);
+	TextColorDimmed = Color3.fromRGB(200, 200, 205);
+	TextColorMuted = Color3.fromRGB(140, 140, 145);
 	
 	-- Status colors
 	Success = Color3.fromRGB(34, 197, 94);
@@ -274,7 +274,7 @@ function library:CreateWindow(Keybind, Name)
 	local rightCorner = Instance.new("UICorner", window.RightSide)
 	rightCorner.CornerRadius = UDim.new(0, 16)
 
-	-- Enhanced tabs holder
+	-- Enhanced tabs holder with improved hit detection
 	window.TabsHolder = Instance.new("Frame", window.Main);
 	window.TabsHolder.Position = UDim2.fromScale(0.02, 0.12);
 	window.TabsHolder.Size = UDim2.fromOffset(110, 350);
@@ -282,7 +282,7 @@ function library:CreateWindow(Keybind, Name)
 
 	window.UIListLayout = Instance.new("UIListLayout", window.TabsHolder);
 	window.UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center;
-	window.UIListLayout.Padding = UDim.new(0, 8);
+	window.UIListLayout.Padding = UDim.new(0, 4); -- Reduced padding for better mouse accuracy
 	window.UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder;
 
 	-- Enhanced separator with gradient
@@ -459,7 +459,7 @@ function library:CreateWindow(Keybind, Name)
 		local tab = {};
 
 		tab.Button = Instance.new("TextButton", window.TabsHolder);
-		tab.Button.Size = UDim2.fromOffset(120, 32);
+		tab.Button.Size = UDim2.fromOffset(120, 36); -- Increased height for better mouse accuracy
 		tab.Button.BackgroundColor3 = library.theme.BackGround;
 		tab.Button.Text = Name;
 		tab.Button.TextColor3 = library.theme.TextColor;
@@ -471,10 +471,35 @@ function library:CreateWindow(Keybind, Name)
 		local corner = Instance.new("UICorner", tab.Button)
 		corner.CornerRadius = UDim.new(0, 8)
 		
-		addHoverEffect(tab.Button,
-			{BackgroundColor3 = library.theme.BackGroundHover, TextColor3 = library.theme.Selected},
-			{BackgroundColor3 = library.theme.BackGround, TextColor3 = library.theme.TextColor}
+		-- Enhanced hover detection area
+		local hoverDetector = Instance.new("Frame", tab.Button)
+		hoverDetector.Size = UDim2.fromScale(1.1, 1.1) -- Slightly larger hit area
+		hoverDetector.Position = UDim2.fromScale(-0.05, -0.05)
+		hoverDetector.BackgroundTransparency = 1
+		hoverDetector.ZIndex = tab.Button.ZIndex + 1
+		
+		addHoverEffect(hoverDetector,
+			{}, -- No visual change on hover detector
+			{}
 		)
+		
+		-- Connect hover effects to the actual button
+		hoverDetector.MouseEnter:Connect(function()
+			createTween(tab.Button, {
+				BackgroundColor3 = library.theme.BackGroundHover, 
+				TextColor3 = library.theme.Selected
+			}, library.theme.HoverSpeed)
+		end)
+		
+		hoverDetector.MouseLeave:Connect(function()
+			if tab.Button.Name ~= "SelectedTab" then
+				createTween(tab.Button, {
+					BackgroundColor3 = library.theme.BackGround, 
+					TextColor3 = library.theme.TextColor
+				}, library.theme.HoverSpeed)
+			end
+		end)
+		
 		addClickEffect(tab.Button, 0.97)
 		addRippleEffect(tab.Button, library.theme.Selected)
 
@@ -520,11 +545,11 @@ function library:CreateWindow(Keybind, Name)
 					createTween(v.Button, {
 						BackgroundColor3 = library.theme.BackGround,
 						TextColor3 = library.theme.TextColor
-					}, 0.2)
+					}, 0.15) -- Faster transition
 					v.Button.Name = "Tab";
 					if v.Window then
-						createTween(v.Window, {BackgroundTransparency = 1}, 0.15)
-						task.wait(0.15)
+						createTween(v.Window, {BackgroundTransparency = 1}, 0.1)
+						task.wait(0.1)
 						v.Window.Visible = false;
 					end
 				end
@@ -533,12 +558,12 @@ function library:CreateWindow(Keybind, Name)
 			createTween(tab.Button, {
 				BackgroundColor3 = library.theme.Selected,
 				TextColor3 = Color3.fromRGB(255, 255, 255)
-			}, 0.2)
+			}, 0.15)
 			tab.Button.Name = "SelectedTab";
 			
 			tab.Window.Visible = true;
 			tab.Window.BackgroundTransparency = 1;
-			createTween(tab.Window, {BackgroundTransparency = 0}, 0.15)
+			createTween(tab.Window, {BackgroundTransparency = 0}, 0.1)
 			
 			block = false;
 		end
@@ -547,8 +572,15 @@ function library:CreateWindow(Keybind, Name)
 			tab:SelectTab();
 		end
 
+		-- Use both the button and hover detector for clicking
 		tab.Button.MouseButton1Click:Connect(function()
 			tab:SelectTab();
+		end)
+		
+		hoverDetector.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 then
+				tab:SelectTab();
+			end
 		end)
 
 		tab.SectorsLeft = {};
@@ -613,6 +645,342 @@ function library:CreateWindow(Keybind, Name)
 					sizeright = sizeright + v.Main.AbsoluteSize.Y + 10;
 				end
 				tab.Window.CanvasSize = UDim2.fromOffset(540, math.max(sizeleft, sizeright) + 20)
+			end
+			
+			-- Enhanced Dropdown Color Picker function
+			function Sector:CreateDropdownColorPicker(Text, Default, Callback, Flag)
+				local ColorPicker = {};
+				ColorPicker.callback = Callback or function() end;
+				ColorPicker.default = Default or Color3.fromRGB(255, 255, 255);
+				ColorPicker.value = ColorPicker.default;
+				ColorPicker.flag = Flag or (Text or "");
+
+				ColorPicker.MainBack = Instance.new("TextButton", Sector.Items);
+				ColorPicker.MainBack.BackgroundColor3 = library.theme.BackGround;
+				ColorPicker.MainBack.AutoButtonColor = false;
+				ColorPicker.MainBack.Size = UDim2.fromOffset(230, 32);
+				ColorPicker.MainBack.Text = "";
+
+				ColorPicker.UiCorner = Instance.new("UICorner", ColorPicker.MainBack);
+				ColorPicker.UiCorner.CornerRadius = UDim.new(0, 8);
+				
+				addHoverEffect(ColorPicker.MainBack,
+					{BackgroundColor3 = library.theme.BackGroundHover},
+					{BackgroundColor3 = library.theme.BackGround}
+				)
+				addClickEffect(ColorPicker.MainBack, 0.98)
+				addRippleEffect(ColorPicker.MainBack, library.theme.Selected)
+
+				ColorPicker.TextLabel = Instance.new("TextLabel", ColorPicker.MainBack);
+				ColorPicker.TextLabel.Text = Text;
+				ColorPicker.TextLabel.BackgroundTransparency = 1;
+				ColorPicker.TextLabel.TextColor3 = library.theme.TextColor;
+				ColorPicker.TextLabel.TextSize = library.theme.TextSize;
+				ColorPicker.TextLabel.Font = library.theme.Font;
+				ColorPicker.TextLabel.Size = UDim2.fromOffset(110, 32);
+				ColorPicker.TextLabel.Position = UDim2.fromScale(0.05, 0);
+				ColorPicker.TextLabel.TextXAlignment = Enum.TextXAlignment.Left;
+
+				-- Dropdown button
+				ColorPicker.DropdownButton = Instance.new("TextButton", ColorPicker.MainBack);
+				ColorPicker.DropdownButton.Position = UDim2.fromScale(0.52, 0.25);
+				ColorPicker.DropdownButton.Size = UDim2.fromOffset(100, 16);
+				ColorPicker.DropdownButton.BackgroundColor3 = library.theme.Toggle;
+				ColorPicker.DropdownButton.BorderSizePixel = 0;
+				ColorPicker.DropdownButton.Text = "";
+				ColorPicker.DropdownButton.AutoButtonColor = false;
+				
+				local dropdownCorner = Instance.new("UICorner", ColorPicker.DropdownButton)
+				dropdownCorner.CornerRadius = UDim.new(0, 4)
+
+				-- Color indicator
+				ColorPicker.ColorIndicator = Instance.new("Frame", ColorPicker.DropdownButton);
+				ColorPicker.ColorIndicator.Position = UDim2.fromOffset(4, 2);
+				ColorPicker.ColorIndicator.Size = UDim2.fromOffset(12, 12);
+				ColorPicker.ColorIndicator.BackgroundColor3 = ColorPicker.default;
+				ColorPicker.ColorIndicator.BorderSizePixel = 0;
+				
+				local colorCorner = Instance.new("UICorner", ColorPicker.ColorIndicator)
+				colorCorner.CornerRadius = UDim.new(0, 2)
+
+				-- Dropdown arrow
+				ColorPicker.Arrow = Instance.new("TextLabel", ColorPicker.DropdownButton);
+				ColorPicker.Arrow.Position = UDim2.fromScale(0.8, 0);
+				ColorPicker.Arrow.Size = UDim2.fromOffset(16, 16);
+				ColorPicker.Arrow.BackgroundTransparency = 1;
+				ColorPicker.Arrow.TextSize = library.theme.TextSize - 2;
+				ColorPicker.Arrow.TextColor3 = library.theme.TextColor;
+				ColorPicker.Arrow.Font = library.theme.Font;
+				ColorPicker.Arrow.Text = "▼";
+
+				-- Color value text
+				ColorPicker.ValueText = Instance.new("TextLabel", ColorPicker.DropdownButton);
+				ColorPicker.ValueText.Position = UDim2.fromOffset(20, 0);
+				ColorPicker.ValueText.Size = UDim2.fromOffset(60, 16);
+				ColorPicker.ValueText.BackgroundTransparency = 1;
+				ColorPicker.ValueText.TextSize = library.theme.TextSize - 2;
+				ColorPicker.ValueText.TextColor3 = library.theme.TextColor;
+				ColorPicker.ValueText.Font = library.theme.Font;
+				ColorPicker.ValueText.Text = string.format("%d,%d,%d", 
+					math.floor(ColorPicker.default.R * 255),
+					math.floor(ColorPicker.default.G * 255),
+					math.floor(ColorPicker.default.B * 255)
+				);
+				ColorPicker.ValueText.TextXAlignment = Enum.TextXAlignment.Left;
+
+				-- Dropdown panel
+				ColorPicker.DropdownPanel = Instance.new("Frame", ColorPicker.MainBack);
+				ColorPicker.DropdownPanel.Position = UDim2.fromOffset(120, 36);
+				ColorPicker.DropdownPanel.Size = UDim2.fromOffset(200, 220);
+				ColorPicker.DropdownPanel.BackgroundColor3 = library.theme.BackGround2;
+				ColorPicker.DropdownPanel.BorderSizePixel = 0;
+				ColorPicker.DropdownPanel.Visible = false;
+				ColorPicker.DropdownPanel.ZIndex = 100;
+				
+				local panelCorner = Instance.new("UICorner", ColorPicker.DropdownPanel)
+				panelCorner.CornerRadius = UDim.new(0, 8)
+				
+				local panelStroke = Instance.new("UIStroke", ColorPicker.DropdownPanel)
+				panelStroke.Color = library.theme.Border
+				panelStroke.Thickness = 1
+
+				-- Color picker components
+				ColorPicker.hue = Instance.new("ImageLabel", ColorPicker.DropdownPanel);
+				ColorPicker.hue.ZIndex = 101;
+				ColorPicker.hue.Position = UDim2.new(0, 10, 0, 10);
+				ColorPicker.hue.Size = UDim2.new(0, 150, 0, 150);
+				ColorPicker.hue.Image = "rbxassetid://4155801252";
+				ColorPicker.hue.ScaleType = Enum.ScaleType.Stretch;
+				ColorPicker.hue.BackgroundColor3 = Color3.new(1, 0, 0);
+				ColorPicker.hue.BorderSizePixel = 0;
+				
+				local hueCorner = Instance.new("UICorner", ColorPicker.hue)
+				hueCorner.CornerRadius = UDim.new(0, 6)
+				
+				ColorPicker.hueselectorpointer = Instance.new("ImageLabel", ColorPicker.DropdownPanel);
+				ColorPicker.hueselectorpointer.ZIndex = 102;
+				ColorPicker.hueselectorpointer.BackgroundTransparency = 1;
+				ColorPicker.hueselectorpointer.BorderSizePixel = 0;
+				ColorPicker.hueselectorpointer.Position = UDim2.new(0, 0, 0, 0);
+				ColorPicker.hueselectorpointer.Size = UDim2.new(0, 8, 0, 8);
+				ColorPicker.hueselectorpointer.Image = "rbxassetid://6885856475";
+				
+				ColorPicker.selector = Instance.new("TextLabel", ColorPicker.DropdownPanel);
+				ColorPicker.selector.ZIndex = 101;
+				ColorPicker.selector.Position = UDim2.new(0, 10, 0, 170);
+				ColorPicker.selector.Size = UDim2.new(0, 150, 0, 15);
+				ColorPicker.selector.BackgroundColor3 = Color3.fromRGB(255, 255, 255);
+				ColorPicker.selector.BorderSizePixel = 0;
+				ColorPicker.selector.Text = "";
+				
+				local selectorCorner = Instance.new("UICorner", ColorPicker.selector)
+				selectorCorner.CornerRadius = UDim.new(0, 7)
+				
+				ColorPicker.gradient = Instance.new("UIGradient", ColorPicker.selector);
+				ColorPicker.gradient.Color = ColorSequence.new({ 
+					ColorSequenceKeypoint.new(0, Color3.new(1, 0, 0)), 
+					ColorSequenceKeypoint.new(0.17, Color3.new(1, 0, 1)), 
+					ColorSequenceKeypoint.new(0.33, Color3.new(0, 0, 1)), 
+					ColorSequenceKeypoint.new(0.5, Color3.new(0, 1, 1)), 
+					ColorSequenceKeypoint.new(0.67, Color3.new(0, 1, 0)), 
+					ColorSequenceKeypoint.new(0.83, Color3.new(1, 1, 0)), 
+					ColorSequenceKeypoint.new(1, Color3.new(1, 0, 0))
+				})
+
+				ColorPicker.pointer = Instance.new("Frame", ColorPicker.selector);
+				ColorPicker.pointer.ZIndex = 102;
+				ColorPicker.pointer.BackgroundColor3 = library.theme.TextColor;
+				ColorPicker.pointer.Position = UDim2.new(0, 0, 0, 0);
+				ColorPicker.pointer.Size = UDim2.new(0, 3, 0, 15);
+				ColorPicker.pointer.BorderSizePixel = 0;
+
+				-- RGB input fields
+				local rgbFrame = Instance.new("Frame", ColorPicker.DropdownPanel)
+				rgbFrame.Position = UDim2.fromOffset(10, 195)
+				rgbFrame.Size = UDim2.fromOffset(180, 20)
+				rgbFrame.BackgroundTransparency = 1
+				rgbFrame.ZIndex = 101
+
+				local rgbLayout = Instance.new("UIListLayout", rgbFrame)
+				rgbLayout.FillDirection = Enum.FillDirection.Horizontal
+				rgbLayout.Padding = UDim.new(0, 5)
+
+				local function createRGBInput(letter, value)
+					local frame = Instance.new("Frame", rgbFrame)
+					frame.Size = UDim2.fromOffset(55, 20)
+					frame.BackgroundTransparency = 1
+					frame.ZIndex = 101
+
+					local label = Instance.new("TextLabel", frame)
+					label.Size = UDim2.fromOffset(15, 20)
+					label.Position = UDim2.fromOffset(0, 0)
+					label.BackgroundTransparency = 1
+					label.Text = letter .. ":"
+					label.TextColor3 = library.theme.TextColor
+					label.TextSize = 10
+					label.Font = library.theme.Font
+					label.ZIndex = 101
+
+					local input = Instance.new("TextBox", frame)
+					input.Size = UDim2.fromOffset(35, 16)
+					input.Position = UDim2.fromOffset(18, 2)
+					input.BackgroundColor3 = library.theme.Toggle
+					input.BorderSizePixel = 0
+					input.Text = tostring(value)
+					input.TextColor3 = library.theme.TextColor
+					input.TextSize = 10
+					input.Font = library.theme.Font
+					input.ZIndex = 101
+					input.ClearTextOnFocus = false
+
+					local inputCorner = Instance.new("UICorner", input)
+					inputCorner.CornerRadius = UDim.new(0, 3)
+
+					return input
+				end
+
+				local rInput = createRGBInput("R", math.floor(ColorPicker.default.R * 255))
+				local gInput = createRGBInput("G", math.floor(ColorPicker.default.G * 255))
+				local bInput = createRGBInput("B", math.floor(ColorPicker.default.B * 255))
+
+				if ColorPicker.flag and ColorPicker.flag ~= "" then
+					library.flags[ColorPicker.flag] = ColorPicker.default;
+				end
+
+				ColorPicker.color = 1 -- Initialize hue value
+
+				function ColorPicker:RefreshHue()
+					local mouse = Players.LocalPlayer:GetMouse()
+					local x = math.clamp((mouse.X - ColorPicker.hue.AbsolutePosition.X) / ColorPicker.hue.AbsoluteSize.X, 0, 1);
+					local y = math.clamp((mouse.Y - ColorPicker.hue.AbsolutePosition.Y) / ColorPicker.hue.AbsoluteSize.Y, 0, 1);
+					
+					createTween(ColorPicker.hueselectorpointer, {
+						Position = UDim2.new(0, x * ColorPicker.hue.AbsoluteSize.X - 4, 0, y * ColorPicker.hue.AbsoluteSize.Y - 4)
+					}, 0.03)
+					
+					ColorPicker:Set(Color3.fromHSV(ColorPicker.color, x, 1 - y));
+				end
+
+				function ColorPicker:RefreshSelector()
+					local mouse = Players.LocalPlayer:GetMouse()
+					local pos = math.clamp((mouse.X - ColorPicker.selector.AbsolutePosition.X) / ColorPicker.selector.AbsoluteSize.X, 0, 1);
+					ColorPicker.color = 1 - pos;
+					createTween(ColorPicker.pointer, {Position = UDim2.new(pos, 0, 0, 0)}, 0.03)
+					ColorPicker.hue.BackgroundColor3 = Color3.fromHSV(1 - pos, 1, 1);
+
+					local x = (ColorPicker.hueselectorpointer.AbsolutePosition.X + 4 - ColorPicker.hue.AbsolutePosition.X) / ColorPicker.hue.AbsoluteSize.X;
+					local y = (ColorPicker.hueselectorpointer.AbsolutePosition.Y + 4 - ColorPicker.hue.AbsolutePosition.Y) / ColorPicker.hue.AbsoluteSize.Y;
+					ColorPicker:Set(Color3.fromHSV(ColorPicker.color, x, 1 - y));
+				end
+
+				function ColorPicker:Set(value)
+					local color = Color3.new(math.clamp(value.r, 0, 1), math.clamp(value.g, 0, 1), math.clamp(value.b, 0, 1));
+					ColorPicker.value = color;
+					
+					if ColorPicker.flag and ColorPicker.flag ~= "" then
+						library.flags[ColorPicker.flag] = color;
+					end
+					
+					createTween(ColorPicker.ColorIndicator, {BackgroundColor3 = color}, 0.15)
+					
+					-- Update RGB inputs
+					local r, g, b = math.floor(color.R * 255), math.floor(color.G * 255), math.floor(color.B * 255)
+					rInput.Text = tostring(r)
+					gInput.Text = tostring(g)
+					bInput.Text = tostring(b)
+					ColorPicker.ValueText.Text = string.format("%d,%d,%d", r, g, b)
+					
+					pcall(ColorPicker.callback, color);
+				end
+
+				function ColorPicker:Get()
+					return ColorPicker.value;
+				end
+
+				-- RGB input handlers
+				local function handleRGBInput()
+					local r = math.clamp(tonumber(rInput.Text) or 0, 0, 255) / 255
+					local g = math.clamp(tonumber(gInput.Text) or 0, 0, 255) / 255
+					local b = math.clamp(tonumber(bInput.Text) or 0, 0, 255) / 255
+					ColorPicker:Set(Color3.new(r, g, b))
+				end
+
+				rInput.FocusLost:Connect(handleRGBInput)
+				gInput.FocusLost:Connect(handleRGBInput)
+				bInput.FocusLost:Connect(handleRGBInput)
+
+				ColorPicker:Set(ColorPicker.default);
+
+				local dragging_selector = false;
+				local dragging_hue = false;
+
+				ColorPicker.selector.InputBegan:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						dragging_selector = true;
+						ColorPicker:RefreshSelector();
+					end
+				end)
+
+				ColorPicker.selector.InputEnded:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						dragging_selector = false;
+					end
+				end)
+
+				ColorPicker.hue.InputBegan:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						dragging_hue = true;
+						ColorPicker:RefreshHue();
+					end
+				end)
+
+				ColorPicker.hue.InputEnded:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						dragging_hue = false;
+					end
+				end)
+
+				UserInputService.InputChanged:Connect(function(input)
+					if dragging_selector and input.UserInputType == Enum.UserInputType.MouseMovement then
+						ColorPicker:RefreshSelector();
+					end
+					if dragging_hue and input.UserInputType == Enum.UserInputType.MouseMovement then
+						ColorPicker:RefreshHue();
+					end
+				end)
+
+				-- Dropdown toggle
+				local function toggleDropdown()
+					if ColorPicker.DropdownPanel.Visible then
+						createTween(ColorPicker.Arrow, {Rotation = 0}, 0.15)
+						createTween(ColorPicker.DropdownPanel, {Size = UDim2.fromOffset(200, 0)}, 0.15)
+						task.wait(0.15)
+						ColorPicker.DropdownPanel.Visible = false
+					else
+						-- Close other color pickers
+						for i, v in pairs(window.OpenedColorPickers) do
+							if v and i ~= ColorPicker.DropdownPanel then
+								createTween(i, {Size = UDim2.fromOffset(0, 0)}, 0.15)
+								task.wait(0.05)
+								i.Visible = false;
+								window.OpenedColorPickers[i] = false;
+							end
+						end
+						
+						ColorPicker.DropdownPanel.Visible = true
+						ColorPicker.DropdownPanel.Size = UDim2.fromOffset(200, 0)
+						createTween(ColorPicker.Arrow, {Rotation = 180}, 0.15)
+						createTween(ColorPicker.DropdownPanel, {Size = UDim2.fromOffset(200, 220)}, 0.15)
+						window.OpenedColorPickers[ColorPicker.DropdownPanel] = true
+					end
+				end
+
+				ColorPicker.DropdownButton.MouseButton1Click:Connect(toggleDropdown)
+				ColorPicker.MainBack.MouseButton1Click:Connect(toggleDropdown)
+
+				Sector:FixSize();
+				table.insert(library.items, ColorPicker);
+				return ColorPicker;
 			end
 			
 			function Sector:CreateToggle(Text, Default, Callback, Flag)
@@ -1788,4 +2156,10 @@ function library:CreateWindow(Keybind, Name)
 	return window;
 end
 
+-- Library setup for easy usage
+function library:Init()
+	return library
+end
+
+-- Export the library for use with loaders
 return library;
