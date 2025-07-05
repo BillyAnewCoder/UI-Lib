@@ -1,6 +1,7 @@
 local library = { 
 	flags = {};
 	items = {};
+	themeElements = {};
 }
 
 local Players = game:GetService("Players")
@@ -12,7 +13,7 @@ local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
--- Enhanced theme with refined dark aesthetics
+-- Enhanced theme with proper dark aesthetics
 library.theme = {
 	-- Background colors - Much darker theme
 	BackGround = Color3.fromRGB(18, 18, 18);
@@ -21,13 +22,13 @@ library.theme = {
 	BackGroundActive = Color3.fromRGB(45, 45, 45);
 	
 	-- Border colors
-	Border = Color3.fromRGB(60, 60, 65);
+	Border = Color3.fromRGB(50, 50, 50);
 	BorderHover = Color3.fromRGB(85, 0, 255);
 	BorderActive = Color3.fromRGB(100, 20, 255);
 	
 	-- Interactive elements
-	Toggle = Color3.fromRGB(40, 40, 45);
-	ToggleHover = Color3.fromRGB(55, 55, 60);
+	Toggle = Color3.fromRGB(35, 35, 35);
+	ToggleHover = Color3.fromRGB(50, 50, 50);
 	Selected = Color3.fromRGB(85, 0, 255);
 	SelectedHover = Color3.fromRGB(100, 20, 255);
 	SelectedActive = Color3.fromRGB(70, 0, 200);
@@ -52,29 +53,44 @@ library.theme = {
 	EasingDirection = Enum.EasingDirection.Out;
 };
 
--- Store all UI elements that need theme updates
-library.themeElements = {};
-
--- Function to register elements for theme updates
+-- Theme management system
 function library:RegisterThemeElement(element, property, themeKey)
-	if not self.themeElements[themeKey] then
-		self.themeElements[themeKey] = {};
-	end
-	table.insert(self.themeElements[themeKey], {element = element, property = property});
+	if not element or not element.Parent then return end
+	
+	table.insert(self.themeElements, {
+		element = element,
+		property = property,
+		themeKey = themeKey
+	})
 end
 
--- Function to update theme across all elements
 function library:UpdateTheme()
-	for themeKey, elements in pairs(self.themeElements) do
-		local color = self.theme[themeKey];
-		if color then
-			for _, data in pairs(elements) do
-				if data.element and data.element.Parent then
-					data.element[data.property] = color;
-				end
-			end
+	for _, data in pairs(self.themeElements) do
+		if data.element and data.element.Parent then
+			pcall(function()
+				data.element[data.property] = self.theme[data.themeKey]
+			end)
 		end
 	end
+end
+
+function library:SetThemeColor(color)
+	-- Update primary theme colors
+	self.theme.Selected = color
+	self.theme.SelectedHover = Color3.new(
+		math.min(color.R + 0.1, 1),
+		math.min(color.G + 0.1, 1), 
+		math.min(color.B + 0.1, 1)
+	)
+	self.theme.SelectedActive = Color3.new(
+		math.max(color.R - 0.1, 0),
+		math.max(color.G - 0.1, 0), 
+		math.max(color.B - 0.1, 0)
+	)
+	self.theme.BorderHover = color
+	
+	-- Apply to all registered elements
+	self:UpdateTheme()
 end
 
 -- Enhanced animation utility functions
@@ -202,23 +218,23 @@ function library:CreateWindow(Keybind, Name)
 	window.ScreenGui.DisplayOrder = 100;
 	window.ScreenGui.Name = "UILibrary_" .. tostring(math.random(1000, 9999));
 
-	-- Enhanced dragging system with proper event handling
+	-- Enhanced dragging system with color picker detection
 	local dragging, dragInput, dragStart, startPos
 	local dragTween
 	local isDraggingColorPicker = false
 	
-	-- Function to check if we're interacting with a color picker
-	local function isColorPickerInteraction(input)
+	-- Function to check if we're clicking on a color picker
+	local function isClickingColorPicker(input)
 		local mouse = Players.LocalPlayer:GetMouse()
-		local hit = mouse.Hit
-		if hit and hit.Parent then
-			local element = hit.Parent
-			-- Check if the clicked element is part of a color picker
-			while element do
-				if element.Name == "ColorPickerFrame" or element.Name == "picker" or element.Name == "DropdownColorPicker" then
+		local target = mouse.Target
+		
+		if target then
+			local parent = target.Parent
+			while parent do
+				if parent.Name == "ColorPickerFrame" or parent.Name == "DropdownColorPickerFrame" then
 					return true
 				end
-				element = element.Parent
+				parent = parent.Parent
 			end
 		end
 		return false
@@ -241,8 +257,8 @@ function library:CreateWindow(Keybind, Name)
 
 	local dragstart = function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			-- Check if we're clicking on a color picker element
-			if isColorPickerInteraction(input) then
+			-- Check if we're clicking on a color picker
+			if isClickingColorPicker(input) then
 				isDraggingColorPicker = true
 				return
 			end
@@ -269,7 +285,7 @@ function library:CreateWindow(Keybind, Name)
 		end
 	end
 
-	-- Main window with enhanced styling
+	-- Main window with enhanced dark styling
 	window.Main = Instance.new("TextButton", window.ScreenGui);
 	window.Main.Size = UDim2.fromOffset(680, 420);
 	window.Main.BackgroundColor3 = library.theme.BackGround;
@@ -280,7 +296,7 @@ function library:CreateWindow(Keybind, Name)
 	window.Main.InputBegan:Connect(dragstart)
 	window.Main.InputChanged:Connect(dragend)
 	
-	-- Register for theme updates
+	-- Register main window for theme updates
 	library:RegisterThemeElement(window.Main, "BackgroundColor3", "BackGround")
 	
 	-- Enhanced rounded corners
@@ -339,7 +355,7 @@ function library:CreateWindow(Keybind, Name)
 
 	window.UIListLayout = Instance.new("UIListLayout", window.TabsHolder);
 	window.UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center;
-	window.UIListLayout.Padding = UDim.new(0, 4);
+	window.UIListLayout.Padding = UDim.new(0, 8);
 	window.UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder;
 
 	-- Enhanced separator with gradient
@@ -468,7 +484,7 @@ function library:CreateWindow(Keybind, Name)
 		stroke.Color = library.theme.Border
 		stroke.Thickness = 2
 		stroke.Transparency = 0.5
-		
+
 		library:RegisterThemeElement(stroke, "Color", "Border")
 
 		ToggleButton.Button = Instance.new("TextButton", ToggleButton.Frame);
@@ -526,7 +542,7 @@ function library:CreateWindow(Keybind, Name)
 		local tab = {};
 
 		tab.Button = Instance.new("TextButton", window.TabsHolder);
-		tab.Button.Size = UDim2.fromOffset(120, 36);
+		tab.Button.Size = UDim2.fromOffset(120, 36); -- Increased height for better accuracy
 		tab.Button.BackgroundColor3 = library.theme.BackGround;
 		tab.Button.Text = Name;
 		tab.Button.TextColor3 = library.theme.TextColor;
@@ -540,14 +556,6 @@ function library:CreateWindow(Keybind, Name)
 		
 		local corner = Instance.new("UICorner", tab.Button)
 		corner.CornerRadius = UDim.new(0, 8)
-		
-		-- Create larger invisible hit detection area
-		local hitArea = Instance.new("TextButton", tab.Button)
-		hitArea.Size = UDim2.new(1, 10, 1, 5)
-		hitArea.Position = UDim2.new(0, -5, 0, -2)
-		hitArea.BackgroundTransparency = 1
-		hitArea.Text = ""
-		hitArea.ZIndex = tab.Button.ZIndex + 1
 		
 		addHoverEffect(tab.Button,
 			{BackgroundColor3 = library.theme.BackGroundHover, TextColor3 = library.theme.Selected},
@@ -598,7 +606,7 @@ function library:CreateWindow(Keybind, Name)
 					createTween(v.Button, {
 						BackgroundColor3 = library.theme.BackGround,
 						TextColor3 = library.theme.TextColor
-					}, 0.15)
+					}, 0.15) -- Faster animation
 					v.Button.Name = "Tab";
 					if v.Window then
 						createTween(v.Window, {BackgroundTransparency = 1}, 0.1)
@@ -625,13 +633,9 @@ function library:CreateWindow(Keybind, Name)
 			tab:SelectTab();
 		end
 
-		-- Connect both the button and hit area to the same function
-		local function selectTab()
+		tab.Button.MouseButton1Click:Connect(function()
 			tab:SelectTab();
-		end
-		
-		tab.Button.MouseButton1Click:Connect(selectTab)
-		hitArea.MouseButton1Click:Connect(selectTab)
+		end)
 
 		tab.SectorsLeft = {};
 		tab.SectorsRight = {};
@@ -657,7 +661,7 @@ function library:CreateWindow(Keybind, Name)
 			sectorStroke.Color = library.theme.Border
 			sectorStroke.Thickness = 1
 			sectorStroke.Transparency = 0.5
-			
+
 			library:RegisterThemeElement(sectorStroke, "Color", "Border")
 
 			Sector.Items = Instance.new("Frame", Sector.Main);
@@ -713,7 +717,7 @@ function library:CreateWindow(Keybind, Name)
 				Toggle.value = Toggle.default;
 
 				Toggle.Main = Instance.new("TextButton", Sector.Items);
-				Toggle.Main.Size = UDim2.fromOffset(230, 32);
+				Toggle.Main.Size = UDim2.fromOffset(230, 36); -- Increased height for better accuracy
 				Toggle.Main.BackgroundColor3 = library.theme.BackGround;
 				Toggle.Main.AutoButtonColor = false;
 				Toggle.Main.Text = "";
@@ -732,7 +736,7 @@ function library:CreateWindow(Keybind, Name)
 
 				Toggle.Text = Instance.new("TextLabel", Toggle.Main);
 				Toggle.Text.Position = UDim2.fromScale(0.05, 0);
-				Toggle.Text.Size = UDim2.fromOffset(170, 32);
+				Toggle.Text.Size = UDim2.fromOffset(170, 36); -- Match parent height
 				Toggle.Text.Text = Text;
 				Toggle.Text.TextColor3 = library.theme.TextColor;
 				Toggle.Text.Font = library.theme.Font;
@@ -743,8 +747,8 @@ function library:CreateWindow(Keybind, Name)
 				library:RegisterThemeElement(Toggle.Text, "TextColor3", "TextColor")
 
 				Toggle.Indicator = Instance.new("Frame", Toggle.Main);
-				Toggle.Indicator.Position = UDim2.fromScale(0.85, 0.25);
-				Toggle.Indicator.Size = UDim2.fromOffset(16, 16);
+				Toggle.Indicator.Position = UDim2.fromScale(0.85, 0.28); -- Better centered
+				Toggle.Indicator.Size = UDim2.fromOffset(18, 18); -- Slightly larger for better visibility
 				Toggle.Indicator.BackgroundColor3 = library.theme.Toggle;
 				Toggle.Indicator.BorderSizePixel = 0;
 				
@@ -777,7 +781,7 @@ function library:CreateWindow(Keybind, Name)
 					
 					-- Enhanced scale animation with bounce
 					local originalSize = Toggle.Indicator.Size
-					createTween(Toggle.Indicator, {Size = UDim2.fromOffset(18, 18)}, 0.08)
+					createTween(Toggle.Indicator, {Size = UDim2.fromOffset(20, 20)}, 0.08)
 					task.wait(0.08)
 					createTween(Toggle.Indicator, {Size = originalSize}, 0.12, Enum.EasingStyle.Back)
 
@@ -855,6 +859,8 @@ function library:CreateWindow(Keybind, Name)
 				Slider.Slider.BorderSizePixel = 0;
 				Slider.Slider.Position = UDim2.fromScale(0, 0);
 				Slider.Slider.Size = UDim2.fromOffset(50, 16);
+				
+				library:RegisterThemeElement(Slider.Slider, "BackgroundColor3", "Selected")
 				
 				local sliderFillCorner = Instance.new("UICorner", Slider.Slider)
 				sliderFillCorner.CornerRadius = UDim.new(0, 8)
@@ -1465,12 +1471,12 @@ function library:CreateWindow(Keybind, Name)
 				return ColorPicker;
 			end
 
-			-- Enhanced Dropdown Color Picker with proper theme integration
+			-- Enhanced Dropdown Color Picker with better functionality
 			function Sector:CreateDropdownColorPicker(Text, Default, CallBack, Flag)
 				local DropdownColorPicker = {};
 
 				DropdownColorPicker.callback = CallBack or function() end;
-				DropdownColorPicker.default = Default or Color3.fromRGB(85, 0, 255);
+				DropdownColorPicker.default = Default or Color3.fromRGB(255, 255, 255);
 				DropdownColorPicker.value = DropdownColorPicker.default;
 				DropdownColorPicker.flag = Flag or (Text or "");
 
@@ -1491,6 +1497,21 @@ function library:CreateWindow(Keybind, Name)
 				)
 				addClickEffect(DropdownColorPicker.MainBack, 0.98)
 				addRippleEffect(DropdownColorPicker.MainBack, library.theme.Selected)
+				
+				DropdownColorPicker.Indicator = Instance.new("Frame", DropdownColorPicker.MainBack);
+				DropdownColorPicker.Indicator.Position = UDim2.fromScale(0.85, 0.25);
+				DropdownColorPicker.Indicator.Size = UDim2.fromOffset(16, 16);
+				DropdownColorPicker.Indicator.BackgroundColor3 = DropdownColorPicker.default;
+				DropdownColorPicker.Indicator.BorderSizePixel = 0;
+				
+				local indicatorCorner = Instance.new("UICorner", DropdownColorPicker.Indicator)
+				indicatorCorner.CornerRadius = UDim.new(0, 4)
+				
+				local indicatorStroke = Instance.new("UIStroke", DropdownColorPicker.Indicator)
+				indicatorStroke.Color = library.theme.Border
+				indicatorStroke.Thickness = 1
+
+				library:RegisterThemeElement(indicatorStroke, "Color", "Border")
 
 				DropdownColorPicker.TextLabel = Instance.new("TextLabel", DropdownColorPicker.MainBack);
 				DropdownColorPicker.TextLabel.Text = Text;
@@ -1498,112 +1519,72 @@ function library:CreateWindow(Keybind, Name)
 				DropdownColorPicker.TextLabel.TextColor3 = library.theme.TextColor;
 				DropdownColorPicker.TextLabel.TextSize = library.theme.TextSize;
 				DropdownColorPicker.TextLabel.Font = library.theme.Font;
-				DropdownColorPicker.TextLabel.Size = UDim2.fromOffset(110, 32);
+				DropdownColorPicker.TextLabel.Size = UDim2.fromOffset(170, 32);
 				DropdownColorPicker.TextLabel.Position = UDim2.fromScale(0.05, 0);
 				DropdownColorPicker.TextLabel.TextXAlignment = Enum.TextXAlignment.Left;
 
 				library:RegisterThemeElement(DropdownColorPicker.TextLabel, "TextColor3", "TextColor")
 
-				DropdownColorPicker.Main = Instance.new("TextButton", DropdownColorPicker.MainBack);
-				DropdownColorPicker.Main.BackgroundColor3 = library.theme.Toggle;
-				DropdownColorPicker.Main.BorderSizePixel = 0;
-				DropdownColorPicker.Main.Position = UDim2.fromScale(0.52, 0.25);
-				DropdownColorPicker.Main.Size = UDim2.fromOffset(100, 16);
-				DropdownColorPicker.Main.AutoButtonColor = false;
-				DropdownColorPicker.Main.Text = "";
+				-- Enhanced dropdown color picker with larger interface
+				DropdownColorPicker.MainPicker = Instance.new("Frame", DropdownColorPicker.MainBack);
+				DropdownColorPicker.MainPicker.Name = "DropdownColorPickerFrame";
+				DropdownColorPicker.MainPicker.ZIndex = 100;
+				DropdownColorPicker.MainPicker.Visible = false;
+				DropdownColorPicker.MainPicker.Size = UDim2.fromOffset(240, 320);
+				DropdownColorPicker.MainPicker.BorderSizePixel = 0;
+				DropdownColorPicker.MainPicker.BackgroundColor3 = library.theme.BackGround2;
+				DropdownColorPicker.MainPicker.Position = UDim2.fromOffset(-DropdownColorPicker.MainPicker.AbsoluteSize.X + DropdownColorPicker.MainBack.AbsoluteSize.X, 35);
+				window.OpenedColorPickers[DropdownColorPicker.MainPicker] = false;
 				
-				library:RegisterThemeElement(DropdownColorPicker.Main, "BackgroundColor3", "Toggle")
+				library:RegisterThemeElement(DropdownColorPicker.MainPicker, "BackgroundColor3", "BackGround2")
 				
-				local dropdownCorner = Instance.new("UICorner", DropdownColorPicker.Main)
-				dropdownCorner.CornerRadius = UDim.new(0, 4)
-
-				DropdownColorPicker.ColorPreview = Instance.new("Frame", DropdownColorPicker.Main);
-				DropdownColorPicker.ColorPreview.Position = UDim2.fromOffset(4, 2);
-				DropdownColorPicker.ColorPreview.Size = UDim2.fromOffset(12, 12);
+				local pickerCorner = Instance.new("UICorner", DropdownColorPicker.MainPicker)
+				pickerCorner.CornerRadius = UDim.new(0, 12)
+				
+				local pickerStroke = Instance.new("UIStroke", DropdownColorPicker.MainPicker)
+				pickerStroke.Color = library.theme.Border
+				pickerStroke.Thickness = 2
+				
+				library:RegisterThemeElement(pickerStroke, "Color", "Border")
+				
+				-- Color preview at top
+				DropdownColorPicker.ColorPreview = Instance.new("Frame", DropdownColorPicker.MainPicker);
+				DropdownColorPicker.ColorPreview.Position = UDim2.fromOffset(10, 10);
+				DropdownColorPicker.ColorPreview.Size = UDim2.fromOffset(220, 30);
 				DropdownColorPicker.ColorPreview.BackgroundColor3 = DropdownColorPicker.default;
 				DropdownColorPicker.ColorPreview.BorderSizePixel = 0;
 				
 				local previewCorner = Instance.new("UICorner", DropdownColorPicker.ColorPreview)
-				previewCorner.CornerRadius = UDim.new(0, 2)
-
-				DropdownColorPicker.ColorText = Instance.new("TextLabel", DropdownColorPicker.Main);
-				DropdownColorPicker.ColorText.Position = UDim2.fromOffset(20, 0);
-				DropdownColorPicker.ColorText.Size = UDim2.fromOffset(60, 16);
-				DropdownColorPicker.ColorText.BackgroundTransparency = 1;
-				DropdownColorPicker.ColorText.TextSize = library.theme.TextSize - 2;
-				DropdownColorPicker.ColorText.TextColor3 = library.theme.TextColor;
-				DropdownColorPicker.ColorText.Font = library.theme.Font;
-				DropdownColorPicker.ColorText.Text = string.format("%d,%d,%d", 
-					math.floor(DropdownColorPicker.default.R * 255),
-					math.floor(DropdownColorPicker.default.G * 255),
-					math.floor(DropdownColorPicker.default.B * 255)
-				);
-				DropdownColorPicker.ColorText.TextXAlignment = Enum.TextXAlignment.Left;
-
-				library:RegisterThemeElement(DropdownColorPicker.ColorText, "TextColor3", "TextColor")
-
-				DropdownColorPicker.Arrow = Instance.new("TextLabel", DropdownColorPicker.Main);
-				DropdownColorPicker.Arrow.Position = UDim2.fromScale(0.85, 0);
-				DropdownColorPicker.Arrow.Size = UDim2.fromOffset(12, 16);
-				DropdownColorPicker.Arrow.BackgroundTransparency = 1;
-				DropdownColorPicker.Arrow.TextSize = library.theme.TextSize - 3;
-				DropdownColorPicker.Arrow.TextColor3 = library.theme.TextColor;
-				DropdownColorPicker.Arrow.Font = library.theme.Font;
-				DropdownColorPicker.Arrow.Text = "▼";
-				DropdownColorPicker.Arrow.Rotation = 0;
-
-				library:RegisterThemeElement(DropdownColorPicker.Arrow, "TextColor3", "TextColor")
-
-				-- Enhanced dropdown panel with proper event handling
-				DropdownColorPicker.DropdownPanel = Instance.new("Frame", DropdownColorPicker.Main);
-				DropdownColorPicker.DropdownPanel.Name = "DropdownColorPicker";
-				DropdownColorPicker.DropdownPanel.BorderSizePixel = 0;
-				DropdownColorPicker.DropdownPanel.BackgroundColor3 = library.theme.BackGround2;
-				DropdownColorPicker.DropdownPanel.Position = UDim2.fromOffset(0, DropdownColorPicker.Main.Size.Y.Offset + 4);
-				DropdownColorPicker.DropdownPanel.Size = UDim2.fromOffset(220, 280);
-				DropdownColorPicker.DropdownPanel.ZIndex = 150;
-				DropdownColorPicker.DropdownPanel.Visible = false;
+				previewCorner.CornerRadius = UDim.new(0, 6)
 				
-				library:RegisterThemeElement(DropdownColorPicker.DropdownPanel, "BackgroundColor3", "BackGround2")
-				
-				local panelCorner = Instance.new("UICorner", DropdownColorPicker.DropdownPanel)
-				panelCorner.CornerRadius = UDim.new(0, 8)
-				
-				local panelStroke = Instance.new("UIStroke", DropdownColorPicker.DropdownPanel)
-				panelStroke.Color = library.theme.Border
-				panelStroke.Thickness = 1
-				
-				library:RegisterThemeElement(panelStroke, "Color", "Border")
-
-				-- Color picker area
-				DropdownColorPicker.hue = Instance.new("ImageLabel", DropdownColorPicker.DropdownPanel);
-				DropdownColorPicker.hue.ZIndex = 151;
-				DropdownColorPicker.hue.Position = UDim2.new(0, 10, 0, 10);
-				DropdownColorPicker.hue.Size = UDim2.new(0, 200, 0, 150);
+				-- Main color picker area
+				DropdownColorPicker.hue = Instance.new("ImageLabel", DropdownColorPicker.MainPicker);
+				DropdownColorPicker.hue.ZIndex = 101;
+				DropdownColorPicker.hue.Position = UDim2.fromOffset(10, 50);
+				DropdownColorPicker.hue.Size = UDim2.fromOffset(220, 180);
 				DropdownColorPicker.hue.Image = "rbxassetid://4155801252";
 				DropdownColorPicker.hue.ScaleType = Enum.ScaleType.Stretch;
 				DropdownColorPicker.hue.BackgroundColor3 = Color3.new(1, 0, 0);
 				DropdownColorPicker.hue.BorderSizePixel = 0;
 				
 				local hueCorner = Instance.new("UICorner", DropdownColorPicker.hue)
-				hueCorner.CornerRadius = UDim.new(0, 6)
+				hueCorner.CornerRadius = UDim.new(0, 8)
 				
-				DropdownColorPicker.hueselectorpointer = Instance.new("ImageLabel", DropdownColorPicker.DropdownPanel);
-				DropdownColorPicker.hueselectorpointer.ZIndex = 152;
+				DropdownColorPicker.hueselectorpointer = Instance.new("ImageLabel", DropdownColorPicker.MainPicker);
+				DropdownColorPicker.hueselectorpointer.ZIndex = 102;
 				DropdownColorPicker.hueselectorpointer.BackgroundTransparency = 1;
 				DropdownColorPicker.hueselectorpointer.BorderSizePixel = 0;
-				DropdownColorPicker.hueselectorpointer.Position = UDim2.new(0, 10, 0, 10);
-				DropdownColorPicker.hueselectorpointer.Size = UDim2.new(0, 8, 0, 8);
+				DropdownColorPicker.hueselectorpointer.Position = UDim2.fromOffset(10, 50);
+				DropdownColorPicker.hueselectorpointer.Size = UDim2.fromOffset(12, 12);
 				DropdownColorPicker.hueselectorpointer.Image = "rbxassetid://6885856475";
 				
-				-- Hue selector
-				DropdownColorPicker.selector = Instance.new("TextLabel", DropdownColorPicker.DropdownPanel);
-				DropdownColorPicker.selector.ZIndex = 151;
-				DropdownColorPicker.selector.Position = UDim2.new(0, 10, 0, 170);
-				DropdownColorPicker.selector.Size = UDim2.new(0, 200, 0, 15);
+				-- Hue selector bar
+				DropdownColorPicker.selector = Instance.new("Frame", DropdownColorPicker.MainPicker);
+				DropdownColorPicker.selector.ZIndex = 101;
+				DropdownColorPicker.selector.Position = UDim2.fromOffset(10, 240);
+				DropdownColorPicker.selector.Size = UDim2.fromOffset(220, 15);
 				DropdownColorPicker.selector.BackgroundColor3 = Color3.fromRGB(255, 255, 255);
 				DropdownColorPicker.selector.BorderSizePixel = 0;
-				DropdownColorPicker.selector.Text = "";
 				
 				local selectorCorner = Instance.new("UICorner", DropdownColorPicker.selector)
 				selectorCorner.CornerRadius = UDim.new(0, 7)
@@ -1620,68 +1601,59 @@ function library:CreateWindow(Keybind, Name)
 				})
 
 				DropdownColorPicker.pointer = Instance.new("Frame", DropdownColorPicker.selector);
-				DropdownColorPicker.pointer.ZIndex = 152;
-				DropdownColorPicker.pointer.BackgroundColor3 = library.theme.Border;
-				DropdownColorPicker.pointer.Position = UDim2.new(0, 0, 0, 0);
-				DropdownColorPicker.pointer.Size = UDim2.new(0, 4, 0, 15);
+				DropdownColorPicker.pointer.ZIndex = 102;
+				DropdownColorPicker.pointer.BackgroundColor3 = Color3.fromRGB(255, 255, 255);
+				DropdownColorPicker.pointer.Position = UDim2.fromOffset(0, 0);
+				DropdownColorPicker.pointer.Size = UDim2.fromOffset(4, 15);
 				DropdownColorPicker.pointer.BorderSizePixel = 0;
-
-				library:RegisterThemeElement(DropdownColorPicker.pointer, "BackgroundColor3", "Border")
+				
+				local pointerCorner = Instance.new("UICorner", DropdownColorPicker.pointer)
+				pointerCorner.CornerRadius = UDim.new(0, 2)
 
 				-- RGB input fields
-				local rgbFrame = Instance.new("Frame", DropdownColorPicker.DropdownPanel)
-				rgbFrame.Position = UDim2.new(0, 10, 0, 195)
-				rgbFrame.Size = UDim2.new(0, 200, 0, 70)
-				rgbFrame.BackgroundTransparency = 1
-				rgbFrame.ZIndex = 151
-
-				local rgbLayout = Instance.new("UIListLayout", rgbFrame)
-				rgbLayout.FillDirection = Enum.FillDirection.Horizontal
-				rgbLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-				rgbLayout.Padding = UDim.new(0, 10)
-
-				local function createRGBInput(letter, defaultValue)
-					local container = Instance.new("Frame", rgbFrame)
-					container.Size = UDim2.new(0, 60, 0, 70)
-					container.BackgroundTransparency = 1
-					container.ZIndex = 151
-
-					local label = Instance.new("TextLabel", container)
-					label.Position = UDim2.new(0, 0, 0, 0)
-					label.Size = UDim2.new(0, 60, 0, 20)
+				local function createRGBInput(name, position, defaultValue)
+					local frame = Instance.new("Frame", DropdownColorPicker.MainPicker)
+					frame.Position = position
+					frame.Size = UDim2.fromOffset(65, 25)
+					frame.BackgroundColor3 = library.theme.Toggle
+					frame.BorderSizePixel = 0
+					
+					library:RegisterThemeElement(frame, "BackgroundColor3", "Toggle")
+					
+					local corner = Instance.new("UICorner", frame)
+					corner.CornerRadius = UDim.new(0, 4)
+					
+					local label = Instance.new("TextLabel", frame)
+					label.Position = UDim2.fromOffset(2, 0)
+					label.Size = UDim2.fromOffset(15, 25)
 					label.BackgroundTransparency = 1
-					label.Text = letter
+					label.Text = name
 					label.TextColor3 = library.theme.TextColor
-					label.TextSize = library.theme.TextSize - 1
+					label.TextSize = 12
 					label.Font = library.theme.Font
-					label.ZIndex = 151
-
+					label.TextXAlignment = Enum.TextXAlignment.Left
+					
 					library:RegisterThemeElement(label, "TextColor3", "TextColor")
-
-					local input = Instance.new("TextBox", container)
-					input.Position = UDim2.new(0, 0, 0, 25)
-					input.Size = UDim2.new(0, 60, 0, 20)
-					input.BackgroundColor3 = library.theme.Toggle
-					input.BorderSizePixel = 0
-					input.Text = tostring(defaultValue)
-					input.TextColor3 = library.theme.TextColor
-					input.TextSize = library.theme.TextSize - 2
-					input.Font = library.theme.Font
-					input.ClearTextOnFocus = false
-					input.ZIndex = 151
-
-					library:RegisterThemeElement(input, "BackgroundColor3", "Toggle")
-					library:RegisterThemeElement(input, "TextColor3", "TextColor")
-
-					local inputCorner = Instance.new("UICorner", input)
-					inputCorner.CornerRadius = UDim.new(0, 4)
-
-					return input
+					
+					local textbox = Instance.new("TextBox", frame)
+					textbox.Position = UDim2.fromOffset(18, 2)
+					textbox.Size = UDim2.fromOffset(45, 21)
+					textbox.BackgroundTransparency = 1
+					textbox.Text = tostring(defaultValue)
+					textbox.TextColor3 = library.theme.TextColor
+					textbox.TextSize = 11
+					textbox.Font = library.theme.Font
+					textbox.TextXAlignment = Enum.TextXAlignment.Center
+					textbox.ClearTextOnFocus = false
+					
+					library:RegisterThemeElement(textbox, "TextColor3", "TextColor")
+					
+					return textbox
 				end
 
-				local rInput = createRGBInput("R", math.floor(DropdownColorPicker.default.R * 255))
-				local gInput = createRGBInput("G", math.floor(DropdownColorPicker.default.G * 255))
-				local bInput = createRGBInput("B", math.floor(DropdownColorPicker.default.B * 255))
+				DropdownColorPicker.RInput = createRGBInput("R:", UDim2.fromOffset(10, 270), math.floor(DropdownColorPicker.default.R * 255))
+				DropdownColorPicker.GInput = createRGBInput("G:", UDim2.fromOffset(85, 270), math.floor(DropdownColorPicker.default.G * 255))
+				DropdownColorPicker.BInput = createRGBInput("B:", UDim2.fromOffset(160, 270), math.floor(DropdownColorPicker.default.B * 255))
 
 				if DropdownColorPicker.flag and DropdownColorPicker.flag ~= "" then
 					library.flags[DropdownColorPicker.flag] = DropdownColorPicker.default;
@@ -1689,13 +1661,14 @@ function library:CreateWindow(Keybind, Name)
 
 				function DropdownColorPicker:RefreshHue()
 					local mouse = Players.LocalPlayer:GetMouse()
-					local x = (mouse.X - DropdownColorPicker.hue.AbsolutePosition.X) / DropdownColorPicker.hue.AbsoluteSize.X;
-					local y = (mouse.Y - DropdownColorPicker.hue.AbsolutePosition.Y) / DropdownColorPicker.hue.AbsoluteSize.Y;
-					x = math.clamp(x, 0, 1)
-					y = math.clamp(y, 0, 1)
+					local x = math.clamp((mouse.X - DropdownColorPicker.hue.AbsolutePosition.X) / DropdownColorPicker.hue.AbsoluteSize.X, 0, 1);
+					local y = math.clamp((mouse.Y - DropdownColorPicker.hue.AbsolutePosition.Y) / DropdownColorPicker.hue.AbsoluteSize.Y, 0, 1);
 					
 					createTween(DropdownColorPicker.hueselectorpointer, {
-						Position = UDim2.new(0, 10 + (x * 200) - 4, 0, 10 + (y * 150) - 4)
+						Position = UDim2.fromOffset(
+							DropdownColorPicker.hue.AbsolutePosition.X - DropdownColorPicker.MainPicker.AbsolutePosition.X + (x * DropdownColorPicker.hue.AbsoluteSize.X) - 6,
+							DropdownColorPicker.hue.AbsolutePosition.Y - DropdownColorPicker.MainPicker.AbsolutePosition.Y + (y * DropdownColorPicker.hue.AbsoluteSize.Y) - 6
+						)
 					}, 0.03)
 					
 					DropdownColorPicker:Set(Color3.fromHSV(DropdownColorPicker.color or 0, x, 1 - y));
@@ -1705,60 +1678,68 @@ function library:CreateWindow(Keybind, Name)
 					local mouse = Players.LocalPlayer:GetMouse()
 					local pos = math.clamp((mouse.X - DropdownColorPicker.selector.AbsolutePosition.X) / DropdownColorPicker.selector.AbsoluteSize.X, 0, 1);
 					DropdownColorPicker.color = 1 - pos;
-					createTween(DropdownColorPicker.pointer, {Position = UDim2.new(pos, 0, 0, 0)}, 0.03)
+					createTween(DropdownColorPicker.pointer, {Position = UDim2.fromOffset(pos * (DropdownColorPicker.selector.AbsoluteSize.X - 4), 0)}, 0.03)
 					DropdownColorPicker.hue.BackgroundColor3 = Color3.fromHSV(1 - pos, 1, 1);
 
-					local x = math.clamp((DropdownColorPicker.hueselectorpointer.AbsolutePosition.X - DropdownColorPicker.hue.AbsolutePosition.X) / DropdownColorPicker.hue.AbsoluteSize.X, 0, 1);
-					local y = math.clamp((DropdownColorPicker.hueselectorpointer.AbsolutePosition.Y - DropdownColorPicker.hue.AbsolutePosition.Y) / DropdownColorPicker.hue.AbsoluteSize.Y, 0, 1);
-					DropdownColorPicker:Set(Color3.fromHSV(DropdownColorPicker.color, x, 1 - y));
+					-- Update color based on current hue selector position
+					local hueX = (DropdownColorPicker.hueselectorpointer.AbsolutePosition.X - DropdownColorPicker.hue.AbsolutePosition.X + 6) / DropdownColorPicker.hue.AbsoluteSize.X;
+					local hueY = (DropdownColorPicker.hueselectorpointer.AbsolutePosition.Y - DropdownColorPicker.hue.AbsolutePosition.Y + 6) / DropdownColorPicker.hue.AbsoluteSize.Y;
+					DropdownColorPicker:Set(Color3.fromHSV(DropdownColorPicker.color, math.clamp(hueX, 0, 1), 1 - math.clamp(hueY, 0, 1)));
 				end
 
 				function DropdownColorPicker:Set(value)
 					local color = Color3.new(math.clamp(value.r, 0, 1), math.clamp(value.g, 0, 1), math.clamp(value.b, 0, 1));
 					DropdownColorPicker.value = color;
 					
-					-- Update preview and text
-					DropdownColorPicker.ColorPreview.BackgroundColor3 = color;
-					DropdownColorPicker.ColorText.Text = string.format("%d,%d,%d", 
-						math.floor(color.R * 255),
-						math.floor(color.G * 255),
-						math.floor(color.B * 255)
-					);
-					
 					-- Update RGB inputs
-					rInput.Text = tostring(math.floor(color.R * 255))
-					gInput.Text = tostring(math.floor(color.G * 255))
-					bInput.Text = tostring(math.floor(color.B * 255))
+					DropdownColorPicker.RInput.Text = tostring(math.floor(color.R * 255))
+					DropdownColorPicker.GInput.Text = tostring(math.floor(color.G * 255))
+					DropdownColorPicker.BInput.Text = tostring(math.floor(color.B * 255))
+					
+					-- Update color preview
+					DropdownColorPicker.ColorPreview.BackgroundColor3 = color
 					
 					if DropdownColorPicker.flag and DropdownColorPicker.flag ~= "" then
 						library.flags[DropdownColorPicker.flag] = color;
 					end
 					
+					createTween(DropdownColorPicker.Indicator, {BackgroundColor3 = color}, 0.15)
 					pcall(DropdownColorPicker.callback, color);
 				end
 
 				function DropdownColorPicker:Get()
 					return DropdownColorPicker.value;
 				end
+				
+				DropdownColorPicker:Set(DropdownColorPicker.default);
 
 				-- RGB input handlers
-				local function updateFromRGB()
-					local r = math.clamp(tonumber(rInput.Text) or 0, 0, 255) / 255
-					local g = math.clamp(tonumber(gInput.Text) or 0, 0, 255) / 255
-					local b = math.clamp(tonumber(bInput.Text) or 0, 0, 255) / 255
-					DropdownColorPicker:Set(Color3.new(r, g, b))
+				local function setupRGBInput(input, component)
+					input.FocusLost:Connect(function()
+						local value = tonumber(input.Text) or 0
+						value = math.clamp(value, 0, 255)
+						input.Text = tostring(value)
+						
+						local currentColor = DropdownColorPicker.value
+						local newColor
+						if component == "R" then
+							newColor = Color3.fromRGB(value, currentColor.G * 255, currentColor.B * 255)
+						elseif component == "G" then
+							newColor = Color3.fromRGB(currentColor.R * 255, value, currentColor.B * 255)
+						else -- B
+							newColor = Color3.fromRGB(currentColor.R * 255, currentColor.G * 255, value)
+						end
+						DropdownColorPicker:Set(newColor)
+					end)
 				end
 
-				rInput.FocusLost:Connect(updateFromRGB)
-				gInput.FocusLost:Connect(updateFromRGB)
-				bInput.FocusLost:Connect(updateFromRGB)
-
-				DropdownColorPicker:Set(DropdownColorPicker.default);
+				setupRGBInput(DropdownColorPicker.RInput, "R")
+				setupRGBInput(DropdownColorPicker.GInput, "G")
+				setupRGBInput(DropdownColorPicker.BInput, "B")
 
 				local dragging_selector = false;
 				local dragging_hue = false;
 
-				-- Proper event handling to prevent GUI dragging
 				DropdownColorPicker.selector.InputBegan:Connect(function(input)
 					if input.UserInputType == Enum.UserInputType.MouseButton1 then
 						dragging_selector = true;
@@ -1794,36 +1775,34 @@ function library:CreateWindow(Keybind, Name)
 					end
 				end)
 
-				-- Dropdown toggle with proper state management
-				local function toggleDropdown()
-					if not DropdownColorPicker.DropdownPanel.Visible then
+				local inputBegan = function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
 						-- Close other color pickers
 						for i, v in pairs(window.OpenedColorPickers) do
-							if v and i ~= DropdownColorPicker.DropdownPanel then
+							if v and i ~= DropdownColorPicker.MainPicker then
 								createTween(i, {Size = UDim2.fromOffset(0, 0)}, 0.15)
-								task.wait(0.05)
+								task.wait(0.15)
 								i.Visible = false;
 								window.OpenedColorPickers[i] = false;
 							end
 						end
 
-						createTween(DropdownColorPicker.Arrow, {Rotation = 180}, 0.15)
-						DropdownColorPicker.DropdownPanel.Visible = true;
-						DropdownColorPicker.DropdownPanel.Size = UDim2.fromOffset(0, 0)
-						createTween(DropdownColorPicker.DropdownPanel, {Size = UDim2.fromOffset(220, 280)}, 0.2, Enum.EasingStyle.Back)
-						window.OpenedColorPickers[DropdownColorPicker.DropdownPanel] = true;
-					else
-						createTween(DropdownColorPicker.Arrow, {Rotation = 0}, 0.15)
-						createTween(DropdownColorPicker.DropdownPanel, {Size = UDim2.fromOffset(0, 0)}, 0.15)
-						task.wait(0.15)
-						DropdownColorPicker.DropdownPanel.Visible = false;
-						window.OpenedColorPickers[DropdownColorPicker.DropdownPanel] = false;
+						if not DropdownColorPicker.MainPicker.Visible then
+							DropdownColorPicker.MainPicker.Visible = true;
+							DropdownColorPicker.MainPicker.Size = UDim2.fromOffset(0, 0)
+							createTween(DropdownColorPicker.MainPicker, {Size = UDim2.fromOffset(240, 320)}, 0.25, Enum.EasingStyle.Back)
+						else
+							createTween(DropdownColorPicker.MainPicker, {Size = UDim2.fromOffset(0, 0)}, 0.15)
+							task.wait(0.15)
+							DropdownColorPicker.MainPicker.Visible = false;
+						end
+						
+						window.OpenedColorPickers[DropdownColorPicker.MainPicker] = DropdownColorPicker.MainPicker.Visible;
 					end
 				end
 
-				DropdownColorPicker.MainBack.MouseButton1Click:Connect(toggleDropdown)
-				DropdownColorPicker.Main.MouseButton1Click:Connect(toggleDropdown)
-
+				DropdownColorPicker.MainBack.InputBegan:Connect(inputBegan);
+				
 				Sector:FixSize();
 				table.insert(library.items, DropdownColorPicker);
 				return DropdownColorPicker;
@@ -2309,25 +2288,6 @@ function library:CreateWindow(Keybind, Name)
 	end
 
 	return window;
-end
-
--- Function to update theme color and apply to all elements
-function library:SetThemeColor(color)
-	self.theme.Selected = color
-	self.theme.SelectedHover = Color3.new(
-		math.min(color.R + 0.1, 1),
-		math.min(color.G + 0.1, 1), 
-		math.min(color.B + 0.1, 1)
-	)
-	self.theme.SelectedActive = Color3.new(
-		math.max(color.R - 0.1, 0),
-		math.max(color.G - 0.1, 0), 
-		math.max(color.B - 0.1, 0)
-	)
-	self.theme.BorderHover = color
-	
-	-- Update all registered elements
-	self:UpdateTheme()
 end
 
 return library;
