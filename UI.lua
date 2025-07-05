@@ -1,19 +1,20 @@
 local library = { 
-	flags = { };
-	items = { };
+	flags = {};
+	items = {};
 }
 
-local StarterGUI = game:GetService("Players").LocalPlayer.PlayerGui;
-local CoreGui = game:FindFirstChild("CoreGui");
-local textservice = game:GetService("TextService");
-local httpservice = game:GetService("HttpService");
-local tweenservice = game:GetService("TweenService");
-local runservice = game:GetService("RunService");
-local userinputservice = game:GetService("UserInputService");
+local Players = game:GetService("Players")
+local StarterGui = Players.LocalPlayer.PlayerGui
+local CoreGui = game:FindFirstChild("CoreGui")
+local TextService = game:GetService("TextService")
+local HttpService = game:GetService("HttpService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
--- Enhanced dark theme with pure black backgrounds
+-- Enhanced theme with refined dark aesthetics
 library.theme = {
-	-- Background colors - Pure black theme
+	-- Background colors
 	BackGround = Color3.fromRGB(0, 0, 0);
 	BackGround2 = Color3.fromRGB(15, 15, 15);
 	BackGroundHover = Color3.fromRGB(25, 25, 25);
@@ -60,7 +61,7 @@ local function createTween(object, properties, duration, easingStyle, easingDire
 	easingDirection = easingDirection or library.theme.EasingDirection
 	
 	local tweenInfo = TweenInfo.new(duration, easingStyle, easingDirection)
-	local tween = tweenservice:Create(object, tweenInfo, properties)
+	local tween = TweenService:Create(object, tweenInfo, properties)
 	tween:Play()
 	return tween
 end
@@ -129,7 +130,7 @@ local function addRippleEffect(object, rippleColor)
 	
 	local connection = object.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			local mouse = game.Players.LocalPlayer:GetMouse()
+			local mouse = Players.LocalPlayer:GetMouse()
 			local objectPos = object.AbsolutePosition
 			local objectSize = object.AbsoluteSize
 			
@@ -166,12 +167,12 @@ local function addRippleEffect(object, rippleColor)
 end
 
 function library:CreateWindow(Keybind, Name)
-	local window = { };
+	local window = {};
 	window.keybind = Keybind or Enum.KeyCode.RightShift;
 	window.name = Name or "UI Library"
 
 	window.ScreenGui = Instance.new("ScreenGui");
-	window.ScreenGui.Parent = (CoreGui or StarterGUI);
+	window.ScreenGui.Parent = (CoreGui or StarterGui);
 	window.ScreenGui.ResetOnSpawn = false;
 	window.ScreenGui.DisplayOrder = 100;
 	window.ScreenGui.Name = "UILibrary_" .. tostring(math.random(1000, 9999));
@@ -180,7 +181,7 @@ function library:CreateWindow(Keybind, Name)
 	local dragging, dragInput, dragStart, startPos
 	local dragTween
 	
-	userinputservice.InputChanged:Connect(function(input)
+	UserInputService.InputChanged:Connect(function(input)
 		if input == dragInput and dragging then
 			local delta = input.Position - dragStart
 			local newPosition = UDim2.new(
@@ -218,7 +219,7 @@ function library:CreateWindow(Keybind, Name)
 		end
 	end
 
-	-- Main window with pure black background
+	-- Main window with enhanced styling
 	window.Main = Instance.new("TextButton", window.ScreenGui);
 	window.Main.Size = UDim2.fromOffset(680, 420);
 	window.Main.BackgroundColor3 = library.theme.BackGround;
@@ -237,7 +238,7 @@ function library:CreateWindow(Keybind, Name)
 	local mainStroke = Instance.new("UIStroke", window.Main)
 	mainStroke.Color = library.theme.Border
 	mainStroke.Thickness = 2
-	mainStroke.Transparency = 0.2
+	mainStroke.Transparency = 0.3
 	
 	-- Window entrance animation with bounce
 	window.Main.Position = UDim2.fromScale(0.5, 0.5)
@@ -263,7 +264,7 @@ function library:CreateWindow(Keybind, Name)
 	local shadowCorner = Instance.new("UICorner", shadow)
 	shadowCorner.CornerRadius = UDim.new(0, 16)
 
-	-- Enhanced sidebar with black gradient
+	-- Enhanced sidebar with gradient
 	window.RightSide = Instance.new("Frame", window.Main);
 	window.RightSide.BackgroundColor3 = library.theme.BackGround2;
 	window.RightSide.Size = UDim2.fromOffset(140, 420);
@@ -316,7 +317,7 @@ function library:CreateWindow(Keybind, Name)
 	window.Title.FontFace = fontFace;
 
 	-- Enhanced keybind toggle with smooth animations
-	userinputservice.InputBegan:Connect(function(key)
+	UserInputService.InputBegan:Connect(function(key)
 		if key.KeyCode == window.keybind then
 			if window.Main.Visible then
 				-- Hide animation
@@ -342,20 +343,20 @@ function library:CreateWindow(Keybind, Name)
 					BackgroundTransparency = 0
 				}, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 				createTween(shadow, {BackgroundTransparency = 0.5}, 0.3)
-				createTween(mainStroke, {Transparency = 0.2}, 0.3)
+				createTween(mainStroke, {Transparency = 0.3}, 0.3)
 			end
 		end
 	end)
 
-	window.Tabs = { };
-	window.OpenedColorPickers = { };
+	window.Tabs = {};
+	window.OpenedColorPickers = {};
 	
 	function window:UpdateKeyBind(Key)
 		window.keybind = Key;
 	end
 
 	function window:CreateToggleButton()
-		local ToggleButton = { };
+		local ToggleButton = {};
 
 		ToggleButton.Frame = Instance.new("Frame", window.ScreenGui);
 		ToggleButton.Frame.Size = UDim2.fromOffset(140, 36);
@@ -364,7 +365,7 @@ function library:CreateWindow(Keybind, Name)
 		ToggleButton.Frame.BackgroundColor3 = library.theme.BackGround;
 		ToggleButton.Frame.BorderSizePixel = 0;
 		
-		-- Make frame draggable using proper input events
+		-- Make frame draggable
 		local dragConnection
 		local isDragging = false
 		
@@ -374,7 +375,7 @@ function library:CreateWindow(Keybind, Name)
 				local startPos = ToggleButton.Frame.Position
 				local startMousePos = input.Position
 				
-				dragConnection = userinputservice.InputChanged:Connect(function(moveInput)
+				dragConnection = UserInputService.InputChanged:Connect(function(moveInput)
 					if moveInput.UserInputType == Enum.UserInputType.MouseMovement and isDragging then
 						local delta = moveInput.Position - startMousePos
 						ToggleButton.Frame.Position = UDim2.new(
@@ -403,7 +404,7 @@ function library:CreateWindow(Keybind, Name)
 		local stroke = Instance.new("UIStroke", ToggleButton.Frame)
 		stroke.Color = library.theme.Border
 		stroke.Thickness = 2
-		stroke.Transparency = 0.3
+		stroke.Transparency = 0.5
 
 		ToggleButton.Button = Instance.new("TextButton", ToggleButton.Frame);
 		ToggleButton.Button.Size = UDim2.fromScale(1, 1);
@@ -430,7 +431,7 @@ function library:CreateWindow(Keybind, Name)
 			createTween(ToggleButton.Button, {TextColor3 = targetColor}, 0.2)
 		end)
 
-		userinputservice.InputBegan:Connect(function(key)
+		UserInputService.InputBegan:Connect(function(key)
 			if key.KeyCode == window.keybind then
 				ToggleButton.Button.Text = window.Main.Visible and "Hide UI" or "Show UI"
 				local targetColor = window.Main.Visible and library.theme.Selected or library.theme.TextColorDimmed
@@ -455,7 +456,7 @@ function library:CreateWindow(Keybind, Name)
 	end
 
 	function window:CreateTab(Name)
-		local tab = { };
+		local tab = {};
 
 		tab.Button = Instance.new("TextButton", window.TabsHolder);
 		tab.Button.Size = UDim2.fromOffset(120, 32);
@@ -513,16 +514,17 @@ function library:CreateWindow(Keybind, Name)
 			if block then return end
 			block = true;
 			
-			for i,v in pairs(window.Tabs) do
+			-- Enhanced tab switching with smooth transitions
+			for i, v in pairs(window.Tabs) do
 				if v ~= tab and v.Button then
 					createTween(v.Button, {
 						BackgroundColor3 = library.theme.BackGround,
 						TextColor3 = library.theme.TextColor
-					})
+					}, 0.2)
 					v.Button.Name = "Tab";
 					if v.Window then
 						createTween(v.Window, {BackgroundTransparency = 1}, 0.15)
-						wait(0.15)
+						task.wait(0.15)
 						v.Window.Visible = false;
 					end
 				end
@@ -531,7 +533,7 @@ function library:CreateWindow(Keybind, Name)
 			createTween(tab.Button, {
 				BackgroundColor3 = library.theme.Selected,
 				TextColor3 = Color3.fromRGB(255, 255, 255)
-			})
+			}, 0.2)
 			tab.Button.Name = "SelectedTab";
 			
 			tab.Window.Visible = true;
@@ -549,11 +551,11 @@ function library:CreateWindow(Keybind, Name)
 			tab:SelectTab();
 		end)
 
-		tab.SectorsLeft = { };
-		tab.SectorsRight = { };
+		tab.SectorsLeft = {};
+		tab.SectorsRight = {};
 
 		function tab:CreateSector(Name, Side)
-			local Sector = { };
+			local Sector = {};
 			Sector.side = Side:lower() or "left"
 			Sector.name = Name or ""
 
@@ -569,8 +571,8 @@ function library:CreateWindow(Keybind, Name)
 			-- Enhanced border with subtle glow
 			local sectorStroke = Instance.new("UIStroke", Sector.Main)
 			sectorStroke.Color = library.theme.Border
-			sectorStroke.Thickness = 1.5
-			sectorStroke.Transparency = 0.3
+			sectorStroke.Thickness = 1
+			sectorStroke.Transparency = 0.5
 
 			Sector.Items = Instance.new("Frame", Sector.Main);
 			Sector.Items.Position = UDim2.fromScale(0.5, 0);
@@ -604,17 +606,17 @@ function library:CreateWindow(Keybind, Name)
 				createTween(Sector.Main, {Size = targetSize}, 0.2)
 				
 				local sizeleft, sizeright = 0, 0;
-				for i,v in pairs(tab.SectorsLeft) do
+				for i, v in pairs(tab.SectorsLeft) do
 					sizeleft = sizeleft + v.Main.AbsoluteSize.Y + 10;
 				end
-				for i,v in pairs(tab.SectorsRight) do
+				for i, v in pairs(tab.SectorsRight) do
 					sizeright = sizeright + v.Main.AbsoluteSize.Y + 10;
 				end
 				tab.Window.CanvasSize = UDim2.fromOffset(540, math.max(sizeleft, sizeright) + 20)
 			end
 			
 			function Sector:CreateToggle(Text, Default, Callback, Flag)
-				local Toggle = { };
+				local Toggle = {};
 				Toggle.text = Text or "";
 				Toggle.default = Default or false;
 				Toggle.callback = Callback or function(value) end;
@@ -680,7 +682,7 @@ function library:CreateWindow(Keybind, Name)
 					-- Enhanced scale animation with bounce
 					local originalSize = Toggle.Indicator.Size
 					createTween(Toggle.Indicator, {Size = UDim2.fromOffset(18, 18)}, 0.08)
-					wait(0.08)
+					task.wait(0.08)
 					createTween(Toggle.Indicator, {Size = originalSize}, 0.12, Enum.EasingStyle.Back)
 
 					if Toggle.flag and Toggle.flag ~= "" then
@@ -700,7 +702,7 @@ function library:CreateWindow(Keybind, Name)
 			end
 
 			function Sector:CreateSlider(Text, Min, Default, Max, Decimals, Callback, Flag)
-				local Slider = { };
+				local Slider = {};
 				Slider.text = Text or "";
 				Slider.callback = Callback or function(value) end;
 				Slider.min = Min or 0;
@@ -790,7 +792,7 @@ function library:CreateWindow(Keybind, Name)
 				Slider:Set(Slider.default);
 
 				function Slider:Refresh()
-					local mouse = game.Players.LocalPlayer:GetMouse();
+					local mouse = Players.LocalPlayer:GetMouse();
 					local percent = math.clamp((mouse.X - Slider.Main.AbsolutePosition.X) / Slider.Main.AbsoluteSize.X, 0, 1);
 					local value = math.floor((Slider.min + (Slider.max - Slider.min) * percent) * Slider.decimals) / Slider.decimals;
 					value = math.clamp(value, Slider.min, Slider.max);
@@ -812,7 +814,7 @@ function library:CreateWindow(Keybind, Name)
 					end
 				end)
 
-				userinputservice.InputChanged:Connect(function(input)
+				UserInputService.InputChanged:Connect(function(input)
 					if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
 						Slider:Refresh();
 					end
@@ -824,13 +826,13 @@ function library:CreateWindow(Keybind, Name)
 			end
 
 			function Sector:CreateDropDown(Text, Items, Default, Multichoice, Callback, Flag)
-				local DropDown = { };	
+				local DropDown = {};	
 				DropDown.text = Text or "";
-				DropDown.defaultitems = Items or { };
+				DropDown.defaultitems = Items or {};
 				DropDown.default = Default;
 				DropDown.callback = Callback or function() end;
 				DropDown.multichoice = Multichoice or false;
-				DropDown.values = { };
+				DropDown.values = {};
 				DropDown.flag = Flag or Text or "";
 
 				DropDown.MainBack = Instance.new("TextButton", Sector.Items);
@@ -971,7 +973,7 @@ function library:CreateWindow(Keybind, Name)
 					return DropDown.multichoice and DropDown.values or DropDown.values[1];
 				end
 
-				DropDown.items = { }
+				DropDown.items = {}
 				function DropDown:Add(v)
 					local Item = Instance.new("TextButton", DropDown.Itemsframe);
 					Item.BackgroundColor3 = library.theme.Toggle;
@@ -1011,7 +1013,7 @@ function library:CreateWindow(Keybind, Name)
 						else
 							createTween(DropDown.Arrow, {Rotation = 0}, 0.15)
 							createTween(DropDown.Itemsframe, {Size = UDim2.fromOffset(DropDown.Main.Size.X.Offset, 0)}, 0.15)
-							wait(0.15)
+							task.wait(0.15)
 							DropDown.Itemsframe.Visible = false;
 							DropDown.Itemsframe.Active = false;
 							DropDown.IgnoreBackButtons.Visible = false;
@@ -1022,7 +1024,7 @@ function library:CreateWindow(Keybind, Name)
 						return
 					end)
 
-					runservice.Heartbeat:Connect(function()
+					RunService.Heartbeat:Connect(function()
 						if DropDown.multichoice and DropDown:isSelected(v) or DropDown.values[1] == v then
 							Item.BackgroundColor3 = library.theme.Selected;
 							Item.Text = v;
@@ -1042,7 +1044,7 @@ function library:CreateWindow(Keybind, Name)
 				function DropDown:Remove(value)
 					local item = DropDown.Itemsframe:FindFirstChild(value);
 					if item then
-						for i,v in pairs(DropDown.items) do
+						for i, v in pairs(DropDown.items) do
 							if v == value then
 								table.remove(DropDown.items, i);
 							end
@@ -1056,7 +1058,7 @@ function library:CreateWindow(Keybind, Name)
 					end
 				end 
 
-				for i,v in pairs(DropDown.defaultitems) do
+				for i, v in pairs(DropDown.defaultitems) do
 					DropDown:Add(v);
 				end
 
@@ -1082,7 +1084,7 @@ function library:CreateWindow(Keybind, Name)
 					else
 						createTween(DropDown.Arrow, {Rotation = 0}, 0.15)
 						createTween(DropDown.Itemsframe, {Size = UDim2.fromOffset(DropDown.Main.Size.X.Offset, 0)}, 0.15)
-						wait(0.15)
+						task.wait(0.15)
 						DropDown.Itemsframe.ScrollingEnabled = false;
 						DropDown.Itemsframe.Visible = false;
 						DropDown.Itemsframe.Active = false;
@@ -1100,7 +1102,7 @@ function library:CreateWindow(Keybind, Name)
 			end
 
 			function Sector:CreateColorPicker(Text, Default, CallBack, Flag)
-				local ColorPicker = { };
+				local ColorPicker = {};
 
 				ColorPicker.callback = CallBack or function() end;
 				ColorPicker.default = Default or Color3.fromRGB(255, 255, 255);
@@ -1220,7 +1222,7 @@ function library:CreateWindow(Keybind, Name)
 				end
 
 				function ColorPicker:RefreshHue()
-					local mouse = game.Players.LocalPlayer:GetMouse()
+					local mouse = Players.LocalPlayer:GetMouse()
 					local x = (mouse.X - ColorPicker.hue.AbsolutePosition.X) / ColorPicker.hue.AbsoluteSize.X;
 					local y = (mouse.Y - ColorPicker.hue.AbsolutePosition.Y) / ColorPicker.hue.AbsoluteSize.Y;
 					createTween(ColorPicker.hueselectorpointer, {
@@ -1230,7 +1232,7 @@ function library:CreateWindow(Keybind, Name)
 				end
 
 				function ColorPicker:RefreshSelector()
-					local mouse = game.Players.LocalPlayer:GetMouse()
+					local mouse = Players.LocalPlayer:GetMouse()
 					local pos = math.clamp((mouse.X - ColorPicker.selector.AbsolutePosition.X) / ColorPicker.selector.AbsoluteSize.X, 0, 1);
 					ColorPicker.color = 1 - pos;
 					createTween(ColorPicker.pointer, {Position = UDim2.new(pos, 0, 0, 0)}, 0.03)
@@ -1252,7 +1254,7 @@ function library:CreateWindow(Keybind, Name)
 					pcall(ColorPicker.callback, color);
 				end
 
-				function ColorPicker:Get(value)
+				function ColorPicker:Get()
 					return ColorPicker.value;
 				end
 				ColorPicker:Set(ColorPicker.default);
@@ -1288,7 +1290,7 @@ function library:CreateWindow(Keybind, Name)
 					end
 				end)
 
-				userinputservice.InputChanged:Connect(function(input)
+				UserInputService.InputChanged:Connect(function(input)
 					if dragging_selector and input.UserInputType == Enum.UserInputType.MouseMovement then
 						ColorPicker:RefreshSelector();
 					end
@@ -1299,10 +1301,10 @@ function library:CreateWindow(Keybind, Name)
 
 				local inputBegan = function(input)
 					if input.UserInputType == Enum.UserInputType.MouseButton1 then
-						for i,v in pairs(window.OpenedColorPickers) do
+						for i, v in pairs(window.OpenedColorPickers) do
 							if v and i ~= ColorPicker.MainPicker then
 								createTween(i, {Size = UDim2.fromOffset(0, 0)}, 0.15)
-								wait(0.15)
+								task.wait(0.15)
 								i.Visible = false;
 								window.OpenedColorPickers[i] = false;
 							end
@@ -1314,7 +1316,7 @@ function library:CreateWindow(Keybind, Name)
 							createTween(ColorPicker.MainPicker, {Size = UDim2.fromOffset(180, 200)}, 0.2, Enum.EasingStyle.Back)
 						else
 							createTween(ColorPicker.MainPicker, {Size = UDim2.fromOffset(0, 0)}, 0.15)
-							wait(0.15)
+							task.wait(0.15)
 							ColorPicker.MainPicker.Visible = false;
 						end
 						
@@ -1330,7 +1332,7 @@ function library:CreateWindow(Keybind, Name)
 			end
 
 			function Sector:CreateKeyBind(Text, Default, CallBack, Flag)
-				local keybind = { };
+				local keybind = {};
 				keybind.text = Text or "";
 				keybind.default = Default or "None";
 				keybind.value = keybind.default;
@@ -1397,10 +1399,10 @@ function library:CreateWindow(Keybind, Name)
 				keybind.Main.MouseButton1Click:Connect(function()
 					keybind.Main.Text = "...";
 					local pulseConnection
-					pulseConnection = runservice.Heartbeat:Connect(function()
+					pulseConnection = RunService.Heartbeat:Connect(function()
 						if keybind.Main.Text == "..." then
 							createTween(keybind.Main, {BackgroundColor3 = library.theme.Selected}, 0.5)
-							wait(0.5)
+							task.wait(0.5)
 							createTween(keybind.Main, {BackgroundColor3 = library.theme.Toggle}, 0.5)
 						else
 							pulseConnection:Disconnect()
@@ -1429,7 +1431,7 @@ function library:CreateWindow(Keybind, Name)
 						library.flags[keybind.flag] = keybind.value;
 					end
 					
-					wait(0.3)
+					task.wait(0.3)
 					createTween(keybind.Main, {TextColor3 = library.theme.TextColor}, 0.15)
 				end
 
@@ -1437,7 +1439,7 @@ function library:CreateWindow(Keybind, Name)
 					return keybind.value;
 				end
 
-				userinputservice.InputBegan:Connect(function(input, gameProcessed)
+				UserInputService.InputBegan:Connect(function(input, gameProcessed)
 					if not gameProcessed then
 						if keybind.Main.Text == "..." then
 							if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode ~= Enum.KeyCode.Backspace then
@@ -1456,7 +1458,7 @@ function library:CreateWindow(Keybind, Name)
 			end
 
 			function Sector:CreateCopyText(Text)
-				local CopyText = { };
+				local CopyText = {};
 
 				CopyText.MainBack = Instance.new("TextButton", Sector.Items);
 				CopyText.MainBack.BackgroundColor3 = library.theme.BackGround;
@@ -1492,7 +1494,7 @@ function library:CreateWindow(Keybind, Name)
 			end
 
 			function Sector:CreateLabel(Text)
-				local Label = { };
+				local Label = {};
 
 				Label.MainBack = Instance.new("TextButton", Sector.Items);
 				Label.MainBack.BackgroundColor3 = library.theme.BackGround;
@@ -1519,7 +1521,7 @@ function library:CreateWindow(Keybind, Name)
 			end
 
 			function Sector:CreateTextBox(Text, Default, Callback, Flag)
-				local TextBox = { };
+				local TextBox = {};
 				TextBox.text = Text or "";
 				TextBox.callback = Callback or function() end;
 				TextBox.default = Default;
@@ -1609,7 +1611,7 @@ function library:CreateWindow(Keybind, Name)
 			end
 
 			function Sector:CreateButton(Text, Callback)
-				local Button = { };
+				local Button = {};
 				Button.text = Text or ""
 				Button.callback = Callback or function() end
 
@@ -1645,7 +1647,7 @@ function library:CreateWindow(Keybind, Name)
 		end
 
 		function tab:CreateConfig(side) 
-			local ConfigSystem = { };
+			local ConfigSystem = {};
 
 			ConfigSystem.configFolder = window.name;
 
@@ -1659,21 +1661,21 @@ function library:CreateWindow(Keybind, Name)
 				local ConfigName = ConfigSystem.sector:CreateTextBox("Config Name", "", function() end, "");
 				local default = tostring(listfiles(ConfigSystem.configFolder)[1] or ""):gsub(ConfigSystem.configFolder .. "\\", ""):gsub(".txt", "");
 				local Config = ConfigSystem.sector:CreateDropDown("Configs", {}, default, false, function() end, "");
-				for i,v in pairs(listfiles(ConfigSystem.configFolder)) do
+				for i, v in pairs(listfiles(ConfigSystem.configFolder)) do
 					if v:find(".txt") then
 						Config:Add(tostring(v):gsub(ConfigSystem.configFolder .. "\\", ""):gsub(".txt", ""));
 					end
 				end
 
 				ConfigSystem.Create = ConfigSystem.sector:CreateButton("Create", function()
-					for i,v in pairs(listfiles(ConfigSystem.configFolder)) do
+					for i, v in pairs(listfiles(ConfigSystem.configFolder)) do
 						Config:Remove(tostring(v):gsub(ConfigSystem.configFolder .. "\\", ""):gsub(".txt", ""));
 					end
 
 					if ConfigName:Get() and ConfigName:Get() ~= "" then
 						local config = {};
 
-						for i,v in pairs(library.flags) do
+						for i, v in pairs(library.flags) do
 							if (v ~= nil and v ~= "") then
 								if (typeof(v) == "Color3") then
 									config[i] = { v.R, v.G, v.B };
@@ -1687,9 +1689,9 @@ function library:CreateWindow(Keybind, Name)
 							end
 						end
 
-						writefile(ConfigSystem.configFolder .. "/" .. ConfigName:Get() .. ".txt", httpservice:JSONEncode(config));
+						writefile(ConfigSystem.configFolder .. "/" .. ConfigName:Get() .. ".txt", HttpService:JSONEncode(config));
 
-						for i,v in pairs(listfiles(ConfigSystem.configFolder)) do
+						for i, v in pairs(listfiles(ConfigSystem.configFolder)) do
 							if v:find(".txt") then
 								Config:Add(tostring(v):gsub(ConfigSystem.configFolder .. "\\", ""):gsub(".txt", ""));
 							end
@@ -1700,7 +1702,7 @@ function library:CreateWindow(Keybind, Name)
 				ConfigSystem.Save = ConfigSystem.sector:CreateButton("Save", function()
 					local config = {}
 					if Config:Get() and Config:Get() ~= "" then
-						for i,v in pairs(library.flags) do
+						for i, v in pairs(library.flags) do
 							if (v ~= nil and v ~= "") then
 								if (typeof(v) == "Color3") then
 									config[i] = { v.R, v.G, v.B };
@@ -1714,7 +1716,7 @@ function library:CreateWindow(Keybind, Name)
 							end
 						end
 
-						writefile(ConfigSystem.configFolder .. "/" .. Config:Get() .. ".txt", httpservice:JSONEncode(config));
+						writefile(ConfigSystem.configFolder .. "/" .. Config:Get() .. ".txt", HttpService:JSONEncode(config));
 					end
 				end)
 
@@ -1722,10 +1724,10 @@ function library:CreateWindow(Keybind, Name)
 					local Success = pcall(readfile, ConfigSystem.configFolder .. "/" .. Config:Get() .. ".txt");
 					if (Success) then
 						pcall(function() 
-							local ReadConfig = httpservice:JSONDecode(readfile(ConfigSystem.configFolder .. "/" .. Config:Get() .. ".txt"));
+							local ReadConfig = HttpService:JSONDecode(readfile(ConfigSystem.configFolder .. "/" .. Config:Get() .. ".txt"));
 							local NewConfig = {};
 
-							for i,v in pairs(ReadConfig) do
+							for i, v in pairs(ReadConfig) do
 								if (typeof(v) == "table") then
 									if (typeof(v[1]) == "number") then
 										NewConfig[i] = Color3.new(v[1], v[2], v[3]);
@@ -1741,8 +1743,8 @@ function library:CreateWindow(Keybind, Name)
 
 							library.flags = NewConfig;
 
-							for i,v in pairs(library.flags) do
-								for i2,v2 in pairs(library.items) do
+							for i, v in pairs(library.flags) do
+								for i2, v2 in pairs(library.items) do
 									if (i ~= nil and i ~= "" and i ~= "Configs_Name" and i ~= "Configs" and v2.flag ~= nil) then
 										if (v2.flag == i) then
 											pcall(function() 
@@ -1757,7 +1759,7 @@ function library:CreateWindow(Keybind, Name)
 				end)
 
 				ConfigSystem.Delete = ConfigSystem.sector:CreateButton("Delete", function()
-					for i,v in pairs(listfiles(ConfigSystem.configFolder)) do
+					for i, v in pairs(listfiles(ConfigSystem.configFolder)) do
 						Config:Remove(tostring(v):gsub(ConfigSystem.configFolder .. "\\", ""):gsub(".txt", ""));
 					end
 
@@ -1765,7 +1767,7 @@ function library:CreateWindow(Keybind, Name)
 					if (not isfile(ConfigSystem.configFolder .. "/" .. Config:Get() .. ".txt")) then return; end;
 					delfile(ConfigSystem.configFolder .. "/" .. Config:Get() .. ".txt");
 
-					for i,v in pairs(listfiles(ConfigSystem.configFolder)) do
+					for i, v in pairs(listfiles(ConfigSystem.configFolder)) do
 						if v:find(".txt") then
 							Config:Add(tostring(v):gsub(ConfigSystem.configFolder .. "\\", ""):gsub(".txt", ""));
 						end;
