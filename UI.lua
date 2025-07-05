@@ -2,6 +2,7 @@ local library = {
 	flags = { };
 	items = { };
 }
+
 local StarterGUI = game:GetService("Players").LocalPlayer.PlayerGui;
 local CoreGui = game:FindFirstChild("CoreGui");
 local textservice = game:GetService("TextService");
@@ -10,32 +11,32 @@ local tweenservice = game:GetService("TweenService");
 local runservice = game:GetService("RunService");
 local userinputservice = game:GetService("UserInputService");
 
--- Enhanced theme with refined dark aesthetics
+-- Enhanced dark theme with pure black backgrounds
 library.theme = {
-	-- Background colors
-	BackGround = Color3.fromRGB(25, 25, 28);
-	BackGround2 = Color3.fromRGB(32, 32, 36);
-	BackGroundHover = Color3.fromRGB(40, 40, 45);
-	BackGroundActive = Color3.fromRGB(45, 45, 50);
+	-- Background colors - Pure black theme
+	BackGround = Color3.fromRGB(0, 0, 0);
+	BackGround2 = Color3.fromRGB(15, 15, 15);
+	BackGroundHover = Color3.fromRGB(25, 25, 25);
+	BackGroundActive = Color3.fromRGB(35, 35, 35);
 	
 	-- Border colors
-	Border = Color3.fromRGB(55, 55, 60);
+	Border = Color3.fromRGB(40, 40, 40);
 	BorderHover = Color3.fromRGB(85, 0, 255);
 	BorderActive = Color3.fromRGB(100, 20, 255);
 	
 	-- Interactive elements
-	Toggle = Color3.fromRGB(50, 50, 55);
-	ToggleHover = Color3.fromRGB(60, 60, 65);
+	Toggle = Color3.fromRGB(30, 30, 30);
+	ToggleHover = Color3.fromRGB(45, 45, 45);
 	Selected = Color3.fromRGB(85, 0, 255);
 	SelectedHover = Color3.fromRGB(100, 20, 255);
 	SelectedActive = Color3.fromRGB(70, 0, 200);
 	
 	-- Text colors
-	Font = Enum.Font.Gotham; -- Changed from Inter to Gotham
+	Font = Enum.Font.Gotham;
 	TextSize = 13;
-	TextColor = Color3.fromRGB(240, 240, 245);
-	TextColorDimmed = Color3.fromRGB(160, 160, 170);
-	TextColorMuted = Color3.fromRGB(120, 120, 130);
+	TextColor = Color3.fromRGB(255, 255, 255);
+	TextColorDimmed = Color3.fromRGB(180, 180, 180);
+	TextColorMuted = Color3.fromRGB(120, 120, 120);
 	
 	-- Status colors
 	Success = Color3.fromRGB(34, 197, 94);
@@ -217,7 +218,7 @@ function library:CreateWindow(Keybind, Name)
 		end
 	end
 
-	-- Main window with enhanced styling
+	-- Main window with pure black background
 	window.Main = Instance.new("TextButton", window.ScreenGui);
 	window.Main.Size = UDim2.fromOffset(680, 420);
 	window.Main.BackgroundColor3 = library.theme.BackGround;
@@ -235,8 +236,8 @@ function library:CreateWindow(Keybind, Name)
 	-- Enhanced border with gradient effect
 	local mainStroke = Instance.new("UIStroke", window.Main)
 	mainStroke.Color = library.theme.Border
-	mainStroke.Thickness = 1.5
-	mainStroke.Transparency = 0.3
+	mainStroke.Thickness = 2
+	mainStroke.Transparency = 0.2
 	
 	-- Window entrance animation with bounce
 	window.Main.Position = UDim2.fromScale(0.5, 0.5)
@@ -253,16 +254,16 @@ function library:CreateWindow(Keybind, Name)
 	local shadow = Instance.new("Frame", window.Main)
 	shadow.Name = "Shadow"
 	shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-	shadow.BackgroundTransparency = 0.7
+	shadow.BackgroundTransparency = 0.5
 	shadow.BorderSizePixel = 0
-	shadow.Position = UDim2.fromOffset(4, 4)
+	shadow.Position = UDim2.fromOffset(6, 6)
 	shadow.Size = UDim2.fromScale(1, 1)
 	shadow.ZIndex = window.Main.ZIndex - 1
 	
 	local shadowCorner = Instance.new("UICorner", shadow)
 	shadowCorner.CornerRadius = UDim.new(0, 16)
 
-	-- Enhanced sidebar with gradient
+	-- Enhanced sidebar with black gradient
 	window.RightSide = Instance.new("Frame", window.Main);
 	window.RightSide.BackgroundColor3 = library.theme.BackGround2;
 	window.RightSide.Size = UDim2.fromOffset(140, 420);
@@ -340,8 +341,8 @@ function library:CreateWindow(Keybind, Name)
 					Size = UDim2.fromOffset(680, 420),
 					BackgroundTransparency = 0
 				}, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-				createTween(shadow, {BackgroundTransparency = 0.7}, 0.3)
-				createTween(mainStroke, {Transparency = 0.3}, 0.3)
+				createTween(shadow, {BackgroundTransparency = 0.5}, 0.3)
+				createTween(mainStroke, {Transparency = 0.2}, 0.3)
 			end
 		end
 	end)
@@ -363,7 +364,7 @@ function library:CreateWindow(Keybind, Name)
 		ToggleButton.Frame.BackgroundColor3 = library.theme.BackGround;
 		ToggleButton.Frame.BorderSizePixel = 0;
 		
-		-- Make frame draggable
+		-- Make frame draggable using proper input events
 		local dragConnection
 		local isDragging = false
 		
@@ -401,8 +402,8 @@ function library:CreateWindow(Keybind, Name)
 		
 		local stroke = Instance.new("UIStroke", ToggleButton.Frame)
 		stroke.Color = library.theme.Border
-		stroke.Thickness = 1.5
-		stroke.Transparency = 0.5
+		stroke.Thickness = 2
+		stroke.Transparency = 0.3
 
 		ToggleButton.Button = Instance.new("TextButton", ToggleButton.Frame);
 		ToggleButton.Button.Size = UDim2.fromScale(1, 1);
@@ -568,8 +569,8 @@ function library:CreateWindow(Keybind, Name)
 			-- Enhanced border with subtle glow
 			local sectorStroke = Instance.new("UIStroke", Sector.Main)
 			sectorStroke.Color = library.theme.Border
-			sectorStroke.Thickness = 1
-			sectorStroke.Transparency = 0.5
+			sectorStroke.Thickness = 1.5
+			sectorStroke.Transparency = 0.3
 
 			Sector.Items = Instance.new("Frame", Sector.Main);
 			Sector.Items.Position = UDim2.fromScale(0.5, 0);
