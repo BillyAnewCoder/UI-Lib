@@ -1,6 +1,3 @@
--- Enhanced Roblox UI Library - Compact and Modern Design
--- Improved spacing, sizing, and visual aesthetics
-
 local library = { 
 	flags = { };
 	items = { };
@@ -13,32 +10,28 @@ local httpservice = game:GetService("HttpService");
 local tweenservice = game:GetService("TweenService");
 local runservice = game:GetService("RunService");
 
--- Enhanced theme with modern colors and improved contrast
+-- Enhanced theme with additional animation properties
 library.theme = {
-	-- Main backgrounds - darker and more modern
-	BackGround = Color3.fromRGB(20, 20, 25);
-	BackGround2 = Color3.fromRGB(28, 28, 35);
-	BackGroundHover = Color3.fromRGB(35, 35, 42);
+	BackGround = Color3.fromRGB(30, 30, 30);
+	BackGround2 = Color3.fromRGB(38, 38, 38);
+	BackGroundHover = Color3.fromRGB(45, 45, 45);
 	
-	-- Borders - subtle but visible
-	Border = Color3.fromRGB(45, 45, 52);
-	BorderHover = Color3.fromRGB(88, 101, 242);
+	Border = Color3.fromRGB(0, 0, 0);
+	BorderHover = Color3.fromRGB(85, 0, 255);
 	
-	-- Interactive elements
-	Toggle = Color3.fromRGB(45, 45, 52);
-	ToggleHover = Color3.fromRGB(55, 55, 62);
-	Selected = Color3.fromRGB(88, 101, 242);
-	SelectedHover = Color3.fromRGB(71, 82, 196);
+	Toggle = Color3.fromRGB(62, 62, 62);
+	ToggleHover = Color3.fromRGB(75, 75, 75);
+	Selected = Color3.fromRGB(85, 0, 255);
+	SelectedHover = Color3.fromRGB(100, 20, 255);
 	
-	-- Typography
-	Font = Enum.Font.Ubuntu; -- Changed from Enum.Font.Inter to Ubuntu
-	TextSize = 13;
-	TextColor = Color3.fromRGB(220, 221, 222);
-	TextColorDimmed = Color3.fromRGB(163, 166, 170);
+	Font = Enum.Font.Ubuntu; -- Changed from Inter to Ubuntu
+	TextSize = 14;
+	TextColor = Color3.fromRGB(255, 255, 255);
+	TextColorDimmed = Color3.fromRGB(180, 180, 180);
 	
-	-- Animation settings - faster and smoother
-	AnimationSpeed = 0.15;
-	HoverSpeed = 0.1;
+	-- Animation settings
+	AnimationSpeed = 0.2;
+	HoverSpeed = 0.15;
 	EasingStyle = Enum.EasingStyle.Quart;
 	EasingDirection = Enum.EasingDirection.Out;
 };
@@ -74,26 +67,44 @@ local function addHoverEffect(object, hoverProperties, normalProperties)
 end
 
 local function addClickEffect(object, clickScale)
-	clickScale = clickScale or 0.96
+	clickScale = clickScale or 0.95
 	local originalSize = object.Size
 	
 	object.MouseButton1Down:Connect(function()
-		createTween(object, {Size = UDim2.fromScale(originalSize.X.Scale * clickScale, originalSize.Y.Scale * clickScale)}, 0.08)
+		createTween(object, {Size = UDim2.fromScale(originalSize.X.Scale * clickScale, originalSize.Y.Scale * clickScale)}, 0.1)
 	end)
 	
 	object.MouseButton1Up:Connect(function()
-		createTween(object, {Size = originalSize}, 0.12)
+		createTween(object, {Size = originalSize}, 0.1)
 	end)
 	
 	object.MouseLeave:Connect(function()
-		createTween(object, {Size = originalSize}, 0.12)
+		createTween(object, {Size = originalSize}, 0.1)
 	end)
+end
+
+local function addGlowEffect(object, glowColor, intensity)
+	intensity = intensity or 1
+	glowColor = glowColor or library.theme.Selected
+	
+	local glow = Instance.new("ImageLabel")
+	glow.Name = "Glow"
+	glow.Parent = object
+	glow.BackgroundTransparency = 1
+	glow.Image = "rbxassetid://5028857084"
+	glow.ImageColor3 = glowColor
+	glow.ImageTransparency = 1
+	glow.Size = UDim2.fromScale(1.2, 1.2)
+	glow.Position = UDim2.fromScale(-0.1, -0.1)
+	glow.ZIndex = object.ZIndex - 1
+	
+	return glow
 end
 
 function library:CreateWindow(Keybind, Name)
 	local window = { };
 	window.keybind = Keybind or Enum.KeyCode.RightShift;
-	window.name = Name or "UI Library";
+	window.name = Name
 
 	window.ScreenGui = Instance.new("ScreenGui");
 	window.ScreenGui.Parent = (CoreGui or StarterGUI);
