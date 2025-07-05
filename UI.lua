@@ -31,7 +31,7 @@ library.theme = {
 	SelectedHover = Color3.fromRGB(71, 82, 196);
 	
 	-- Typography
-	Font = Enum.Font.Inter;
+	Font = Enum.Font.Ubuntu; -- Changed from Enum.Font.Inter to Ubuntu
 	TextSize = 13;
 	TextColor = Color3.fromRGB(220, 221, 222);
 	TextColorDimmed = Color3.fromRGB(163, 166, 170);
